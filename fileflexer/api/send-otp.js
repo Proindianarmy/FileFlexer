@@ -1,6 +1,11 @@
 // fileflexer/api/send-otp.js
 import nodemailer from 'nodemailer';
 
+// TEMP DEBUG — remove after confirming credentials load correctly
+console.log('[send-otp] EMAIL_USER:', JSON.stringify(process.env.EMAIL_USER));
+console.log('[send-otp] EMAIL_PASS length:', process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 'undefined');
+console.log('[send-otp] EMAIL_PASS has spaces:', process.env.EMAIL_PASS ? process.env.EMAIL_PASS.includes(' ') : 'n/a');
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
