@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Age Calculator — FileFlexer</title>
+<link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+<link rel="icon" href="../assets/logo.png" type="image/png">
+<link rel="stylesheet" href="../css/style.css">
+<script>try{document.documentElement.setAttribute("data-theme", localStorage.getItem("ff_theme")==="light"?"light":"dark");}catch(e){}</script>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><img class="logo-mark" src="../assets/logo.png" alt="FileFlexer logo">FileFlexer</a>
+    <div class="nav-links">
+      <a href="../index.html">Home</a>
+      <a href="../index.html#services">Tools</a>
+      <a href="../about.html">About</a>
+    </div>
+    <div class="nav-actions" id="navAuthSlot"></div>
+  </div>
+</nav>
+
+<div class="tool-shell wrap">
+  <div class="tool-header">
+    <a href="../index.html#services" class="back">← Back to tools</a>
+    <h1>🎂 Age Calculator</h1>
+    <p>Enter your birthdate to find your exact age.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="field">
+        <label>Date of birth</label>
+        <input type="date" id="dobInput">
+      </div>
+      <button class="btn btn-primary" id="calcBtn">Calculate age</button>
+      <div id="resultBox" style="margin-top:22px;display:none;">
+        <div style="font-size:32px;font-weight:700;font-family:'Space Grotesk',sans-serif;" id="resultBig"></div>
+        <div class="muted" style="color:var(--muted);margin-top:6px;" id="resultDetail"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0;">Saved calculations</h3>
+      <p class="muted" style="color:var(--muted);font-size:12.5px;margin-top:-8px;">Click any item to see the details.</p>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="authOverlay">
+  <div class="modal">
+    <button class="modal-close" id="authClose">✕</button>
+    <div class="modal-tabs" id="authTabs">
+      <div class="modal-tab" id="tabLogin">Sign in</div>
+      <div class="modal-tab active" id="tabSignup">Create account</div>
+    </div>
+    <h2 id="authTitle">Welcome to FileFlexer</h2>
+    <p class="sub" id="authSub">Sign in or create a free account to save your work.</p>
+    <form id="authForm">
+      <div class="field" id="nameField" style="display:none;">
+        <label>Name</label>
+        <input type="text" id="authName" placeholder="Your name">
+      </div>
+      <div class="field" id="emailField">
+        <label>Email</label>
+        <input type="email" id="authEmail" placeholder="you@example.com" required>
+      </div>
+      <div class="field" id="passwordField">
+        <label>Password</label>
+        <input type="password" id="authPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="field" id="otpField" style="display:none;">
+        <label>6-digit code</label>
+        <input type="text" id="authOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+        <div class="otp-resend"><span class="muted" style="color:var(--muted);">Didn't get it?</span><a href="#" id="otpResend">Resend code</a></div>
+      </div>
+      <div class="field" id="newPasswordField" style="display:none;">
+        <label>New password</label>
+        <input type="password" id="authNewPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="modal-error" id="authError"></div>
+      <button type="submit" class="btn btn-primary modal-submit" id="authSubmit">Create account</button>
+      <div class="modal-links" id="modalLinks"><a href="#" id="forgotLink">Forgot password?</a></div>
+      <div class="modal-links" id="backLinkWrap" style="display:none;"><a href="#" id="backLink">← Back</a></div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/auth.js"></script>
+<script src="../js/main.js"></script>
+<script>
+  if(!FF.isLoggedIn()) FF.openAuthModal(location.pathname.split('/').pop(), 'signup');
+
+  document.getElementById('calcBtn').onclick = ()=>{
+    const dob = document.getElementById('dobInput').value;
+    if(!dob){ FF.toast('Pick a date of birth'); return; }
+    const start = new Date(dob);
+    const now = new Date();
+    if(start > now){ FF.toast('Date of birth is in the future'); return; }
+
+    let years = now.getFullYear() - start.getFullYear();
+    let months = now.getMonth() - start.getMonth();
+    let days = now.getDate() - start.getDate();
+    if(days < 0){ months--; days += new Date(now.getFullYear(), now.getMonth(), 0).getDate(); }
+    if(months < 0){ years--; months += 12; }
+    const totalDays = Math.floor((now - start) / 86400000);
+
+    document.getElementById('resultBox').style.display = 'block';
+    document.getElementById('resultBig').textContent = `${years} years, ${months} months, ${days} days`;
+    document.getElementById('resultDetail').textContent = `That's ${totalDays.toLocaleString()} days since ${start.toDateString()}.`;
+
+    if(FF.isLoggedIn()){
+      FF.pushHistory('age', { dob, text: `${years}y ${months}m ${days}d (born ${start.toDateString()})` });
+      renderHistory();
+    }
+  };
+
+  function renderHistory(){
+    const d = FF.getData();
+    const list = document.getElementById('historyList');
+    const items = (d && d.age) || [];
+    if(!items.length){ list.innerHTML = '<div class="empty-state">No calculations yet.</div>'; return; }
+    list.innerHTML = items.map(it=>`
+      <div class="history-item" data-id="${it.id}">
+        <div><div class="name">${it.text}</div><div class="sub">Calculated ${new Date(it.ts).toLocaleString()}</div></div>
+      </div>`).join('');
+    list.querySelectorAll('.history-item').forEach(el=>{
+      el.onclick = ()=>{
+        const it = items.find(x=>x.id===el.dataset.id);
+        if(!it) return;
+        FF.openInfoModal({
+          title: 'Age calculation',
+          rows: [
+            { label:'Result', value: it.text },
+            { label:'Date of birth', value: it.dob || '—' },
+            { label:'Calculated', value: new Date(it.ts).toLocaleString() },
+          ]
+        });
+      };
+    });
+  }
+  renderHistory();
+</script>
+</body>
+</html>

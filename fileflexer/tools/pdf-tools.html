@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Convertor — FileFlexer</title>
+<link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+<link rel="icon" href="../assets/logo.png" type="image/png">
+<link rel="stylesheet" href="../css/style.css">
+<script>try{document.documentElement.setAttribute("data-theme", localStorage.getItem("ff_theme")==="light"?"light":"dark");}catch(e){}</script>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><img class="logo-mark" src="../assets/logo.png" alt="FileFlexer logo">FileFlexer</a>
+    <div class="nav-links">
+      <a href="../index.html">Home</a>
+      <a href="../index.html#services">Tools</a>
+      <a href="../about.html">About</a>
+    </div>
+    <div class="nav-actions" id="navAuthSlot"></div>
+  </div>
+</nav>
+
+<div class="tool-shell wrap">
+  <div class="tool-header">
+    <a href="../index.html#services" class="back">← Back to tools</a>
+    <h1>📄 PDF Convertor</h1>
+    <p>Merge, compress, and convert between Word, images, and PDF — all processed locally in your browser.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tabbtn" data-tab="pdf2img">PDF to Images</button>
+    <button class="tabbtn" data-tab="img2pdf">Images to PDF</button>
+    <button class="tabbtn active" data-tab="merge">Merge PDF</button>
+    <button class="tabbtn" data-tab="compress">Compress PDF</button>
+    <button class="tabbtn" data-tab="w2p">Word/Text to PDF</button>
+    <button class="tabbtn" data-tab="p2w">PDF to Word</button>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <!-- MERGE -->
+      <div class="tabpanel active" id="tab-merge">
+        <div class="panel">
+          <div class="dropzone" id="dz-merge">
+            <div class="dz-icon">⇧</div>
+            <div class="dz-title">Click or drag two or more PDFs here</div>
+            <div class="dz-sub">They'll be merged in the order you add them</div>
+            <input type="file" id="fi-merge" accept="application/pdf" multiple style="display:none;">
+          </div>
+          <div id="merge-filelist"></div>
+          <button class="btn btn-primary" id="btn-merge" style="margin-top:16px;">Merge PDFs</button>
+        </div>
+      </div>
+      <!-- COMPRESS -->
+      <div class="tabpanel" id="tab-compress">
+        <div class="panel">
+          <div class="dropzone" id="dz-compress">
+            <div class="dz-icon">⇧</div>
+            <div class="dz-title">Click or drag a PDF here</div>
+            <div class="dz-sub">Pick a compression level below once it's added</div>
+            <input type="file" id="fi-compress" accept="application/pdf" style="display:none;">
+          </div>
+          <div id="compress-filelist"></div>
+
+          <div class="field" style="margin-top:16px;">
+            <label>Compression level</label>
+            <select id="compressLevel">
+              <option value="light">Light — cleans up structure only, keeps text selectable, smallest size drop</option>
+              <option value="balanced" selected>Balanced — strong size reduction, great for most PDFs</option>
+              <option value="max">Maximum — smallest possible file, best for scans and image-heavy PDFs</option>
+            </select>
+          </div>
+          <p class="muted" id="compressNote" style="color:var(--muted);font-size:12.5px;margin-top:-6px;">
+            Balanced and Maximum re-render each page as an optimized image to squeeze out far more size — great for scans, photos,
+            or PDFs full of images. Text stops being selectable at these levels, so use Light if you need to keep editable/searchable text.
+          </p>
+
+          <button class="btn btn-primary" id="btn-compress" style="margin-top:6px;">Compress PDF</button>
+        </div>
+      </div>
+      <!-- WORD/TXT TO PDF -->
+      <div class="tabpanel" id="tab-w2p">
+        <div class="panel">
+          <div class="dropzone" id="dz-w2p">
+            <div class="dz-icon">⇧</div>
+            <div class="dz-title">Click or drag a .docx or .txt file here</div>
+            <div class="dz-sub">Word docs keep their formatting; text files are laid out cleanly as plain text</div>
+            <input type="file" id="fi-w2p" accept=".docx,.txt" style="display:none;">
+          </div>
+          <div id="w2p-filelist"></div>
+          <button class="btn btn-primary" id="btn-w2p" style="margin-top:16px;">Convert to PDF</button>
+        </div>
+      </div>
+      <!-- PDF TO WORD -->
+      <div class="tabpanel" id="tab-p2w">
+        <div class="panel">
+          <div class="dropzone" id="dz-p2w">
+            <div class="dz-icon">⇧</div>
+            <div class="dz-title">Click or drag a PDF here</div>
+            <div class="dz-sub">Extracts text into an editable .docx file</div>
+            <input type="file" id="fi-p2w" accept="application/pdf" style="display:none;">
+          </div>
+          <div id="p2w-filelist"></div>
+          <button class="btn btn-primary" id="btn-p2w" style="margin-top:16px;">Convert to Word</button>
+        </div>
+      </div>
+      <!-- IMAGES TO PDF -->
+      <div class="tabpanel" id="tab-img2pdf">
+        <div class="panel">
+          <div class="dropzone" id="dz-img2pdf">
+            <div class="dz-icon">⇧</div>
+            <div class="dz-title">Click or drag one or more images here</div>
+            <div class="dz-sub">JPG, PNG, WEBP, GIF — one page per image, in the order you add them</div>
+            <input type="file" id="fi-img2pdf" accept="image/*" multiple style="display:none;">
+          </div>
+          <div id="img2pdf-filelist"></div>
+          <button class="btn btn-primary" id="btn-img2pdf" style="margin-top:16px;">Create PDF</button>
+        </div>
+      </div>
+      <!-- PDF TO IMAGES -->
+      <div class="tabpanel" id="tab-pdf2img">
+        <div class="panel">
+          <div class="dropzone" id="dz-pdf2img">
+            <div class="dz-icon">⇧</div>
+            <div class="dz-title">Click or drag a PDF here</div>
+            <div class="dz-sub">Every page becomes its own image — zipped up if there's more than one</div>
+            <input type="file" id="fi-pdf2img" accept="application/pdf" style="display:none;">
+          </div>
+          <div id="pdf2img-filelist"></div>
+          <div class="grid-2" style="margin-top:16px;">
+            <div class="field">
+              <label>Output format</label>
+              <select id="pdf2imgFormat">
+                <option value="image/jpeg">JPEG</option>
+                <option value="image/png">PNG</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Resolution</label>
+              <select id="pdf2imgScale">
+                <option value="1">Standard (1x)</option>
+                <option value="2" selected>High (2x)</option>
+                <option value="3">Very high (3x)</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-pdf2img">Convert to Images</button>
+        </div>
+      </div>
+      <div id="statusLine" class="muted" style="color:var(--muted);font-size:13.5px;margin-top:14px;"></div>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin-top:0;">Recent PDF activity</h3>
+      <p class="muted" style="color:var(--muted);font-size:12.5px;margin-top:-8px;">Click any item to see the details.</p>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="authOverlay">
+  <div class="modal">
+    <button class="modal-close" id="authClose">✕</button>
+    <div class="modal-tabs" id="authTabs">
+      <div class="modal-tab" id="tabLogin">Sign in</div>
+      <div class="modal-tab active" id="tabSignup">Create account</div>
+    </div>
+    <h2 id="authTitle">Welcome to FileFlexer</h2>
+    <p class="sub" id="authSub">Sign in or create a free account to save your work.</p>
+    <form id="authForm">
+      <div class="field" id="nameField" style="display:none;">
+        <label>Name</label>
+        <input type="text" id="authName" placeholder="Your name">
+      </div>
+      <div class="field" id="emailField">
+        <label>Email</label>
+        <input type="email" id="authEmail" placeholder="you@example.com" required>
+      </div>
+      <div class="field" id="passwordField">
+        <label>Password</label>
+        <input type="password" id="authPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="field" id="otpField" style="display:none;">
+        <label>6-digit code</label>
+        <input type="text" id="authOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+        <div class="otp-resend"><span class="muted" style="color:var(--muted);">Didn't get it?</span><a href="#" id="otpResend">Resend code</a></div>
+      </div>
+      <div class="field" id="newPasswordField" style="display:none;">
+        <label>New password</label>
+        <input type="password" id="authNewPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="modal-error" id="authError"></div>
+      <button type="submit" class="btn btn-primary modal-submit" id="authSubmit">Create account</button>
+      <div class="modal-links" id="modalLinks"><a href="#" id="forgotLink">Forgot password?</a></div>
+      <div class="modal-links" id="backLinkWrap" style="display:none;"><a href="#" id="backLink">← Back</a></div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.7.2/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/main.js"></script>
+<script>
+  if(!FF.isLoggedIn()) FF.openAuthModal(location.pathname.split('/').pop(), 'signup');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  document.querySelectorAll('.tabbtn').forEach(btn=>{
+    btn.onclick = ()=>{
+      document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tabpanel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    };
+  });
+
+  function setStatus(t){ document.getElementById('statusLine').textContent = t; }
+  function formatBytes(b){
+    if(b < 1024) return b + ' B';
+    if(b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+    return (b/1024/1024).toFixed(2) + ' MB';
+  }
+  function download(bytes, filename, mime){
+    const blob = bytes instanceof Blob ? bytes : new Blob([bytes], {type:mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+  function wireDropzone(dzId, fiId, onFiles, multiple){
+    const dz = document.getElementById(dzId), fi = document.getElementById(fiId);
+    dz.onclick = ()=>fi.click();
+    dz.ondragover = (e)=>{ e.preventDefault(); dz.classList.add('drag'); };
+    dz.ondragleave = ()=> dz.classList.remove('drag');
+    dz.ondrop = (e)=>{ e.preventDefault(); dz.classList.remove('drag'); onFiles(multiple?[...e.dataTransfer.files]:[e.dataTransfer.files[0]]); };
+    fi.onchange = ()=> onFiles(multiple?[...fi.files]:[fi.files[0]]);
+  }
+
+  /* ---- MERGE ---- */
+  let mergeFiles = [];
+  wireDropzone('dz-merge','fi-merge', (files)=>{
+    mergeFiles = mergeFiles.concat(files.filter(f=>f));
+    renderList('merge-filelist', mergeFiles);
+  }, true);
+  function renderList(id, files){
+    document.getElementById(id).innerHTML = files.map((f,i)=>`
+      <div class="file-row"><span>${f.name}</span><span class="meta">${formatBytes(f.size)}</span></div>`).join('');
+  }
+  document.getElementById('btn-merge').onclick = async ()=>{
+    if(mergeFiles.length < 2){ FF.toast('Add at least two PDFs'); return; }
+    setStatus('Merging…');
+    try{
+      const { PDFDocument } = PDFLib;
+      const merged = await PDFDocument.create();
+      for(const f of mergeFiles){
+        const bytes = await f.arrayBuffer();
+        const src = await PDFDocument.load(bytes);
+        const pages = await merged.copyPages(src, src.getPageIndices());
+        pages.forEach(p=>merged.addPage(p));
+      }
+      const out = await merged.save();
+      download(out, 'merged.pdf', 'application/pdf');
+      setStatus('Merged ' + mergeFiles.length + ' files.');
+      logHistory('Merged PDF', mergeFiles.map(f=>f.name).join(', '));
+    }catch(err){ console.error(err); setStatus('Merge failed: ' + err.message); }
+  };
+
+  /* ---- COMPRESS ---- */
+  let compressFile = null;
+  wireDropzone('dz-compress','fi-compress', (files)=>{
+    compressFile = files[0];
+    renderList('compress-filelist', [compressFile]);
+  });
+  // Rasterizes each page to an optimized JPEG and rebuilds the PDF from those images.
+  // This is how most "strong" PDF compressors achieve big size drops on scans/photos —
+  // it trades selectable text for a much smaller file.
+  async function compressByRasterizing(file, scale, quality){
+    const arrayBuffer = await file.arrayBuffer();
+    const srcPdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const outDoc = await PDFLib.PDFDocument.create();
+    for(let i=1; i<=srcPdf.numPages; i++){
+      const page = await srcPdf.getPage(i);
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(viewport.width));
+      canvas.height = Math.max(1, Math.round(viewport.height));
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
+      const jpegBytes = await (await fetch(jpegDataUrl)).arrayBuffer();
+      const jpegImage = await outDoc.embedJpg(jpegBytes);
+      const pdfPage = outDoc.addPage([canvas.width, canvas.height]);
+      pdfPage.drawImage(jpegImage, { x:0, y:0, width:canvas.width, height:canvas.height });
+      setStatus(`Compressing… page ${i} of ${srcPdf.numPages}`);
+    }
+    return outDoc.save();
+  }
+
+  document.getElementById('btn-compress').onclick = async ()=>{
+    if(!compressFile){ FF.toast('Add a PDF first'); return; }
+    const level = document.getElementById('compressLevel').value;
+    setStatus('Compressing…');
+    try{
+      const { PDFDocument } = PDFLib;
+      let out;
+      if(level === 'light'){
+        const bytes = await compressFile.arrayBuffer();
+        const pdf = await PDFDocument.load(bytes);
+        out = await pdf.save({ useObjectStreams:true });
+      } else if(level === 'balanced'){
+        out = await compressByRasterizing(compressFile, 1.5, 0.72);
+      } else {
+        out = await compressByRasterizing(compressFile, 1.1, 0.5);
+      }
+      download(out, 'compressed-' + compressFile.name, 'application/pdf');
+      const pct = Math.max(0, Math.round((1 - out.byteLength/compressFile.size)*100));
+      setStatus(`Done. ${formatBytes(compressFile.size)} → ${formatBytes(out.byteLength)} (${pct}% smaller).`);
+      logHistory('Compressed PDF', `${compressFile.name} · -${pct}% · ${level} level`);
+    }catch(err){ console.error(err); setStatus('Compression failed: ' + err.message); }
+  };
+
+  /* ---- WORD/TXT TO PDF ---- */
+  let w2pFile = null;
+  wireDropzone('dz-w2p','fi-w2p', (files)=>{
+    const f = files[0];
+    if(f && !/\.(docx|txt)$/i.test(f.name)){ FF.toast('Please choose a .docx or .txt file'); return; }
+    w2pFile = f;
+    renderList('w2p-filelist', [w2pFile]);
+  });
+  document.getElementById('btn-w2p').onclick = async ()=>{
+    if(!w2pFile){ FF.toast('Add a .docx or .txt file first'); return; }
+    setStatus('Converting…');
+    try{
+      const isTxt = /\.txt$/i.test(w2pFile.name);
+      const container = document.createElement('div');
+      if(isTxt){
+        const text = await w2pFile.text();
+        container.style.cssText = 'padding:30px;font-family:"Courier New",monospace;font-size:13px;line-height:1.6;color:#111;background:#fff;width:700px;white-space:pre-wrap;word-wrap:break-word;';
+        container.textContent = text;
+      } else {
+        const arrayBuffer = await w2pFile.arrayBuffer();
+        const result = await mammoth.convertToHtml({ arrayBuffer });
+        container.style.cssText = 'padding:30px;font-family:Georgia,serif;color:#111;background:#fff;width:700px;';
+        container.innerHTML = result.value;
+      }
+      document.body.appendChild(container);
+      await html2pdf().from(container).set({ filename:w2pFile.name.replace(/\.(docx|txt)$/i,'')+'.pdf', margin:10 }).save();
+      document.body.removeChild(container);
+      setStatus('Converted ' + w2pFile.name + ' to PDF.');
+      logHistory(isTxt ? 'Text → PDF' : 'Word → PDF', w2pFile.name);
+    }catch(err){ console.error(err); setStatus('Conversion failed: ' + err.message); }
+  };
+
+  /* ---- PDF TO WORD ---- */
+  let p2wFile = null;
+  wireDropzone('dz-p2w','fi-p2w', (files)=>{ p2wFile = files[0]; renderList('p2w-filelist', [p2wFile]); });
+
+  // Rebuilds real lines and paragraphs from pdf.js's raw text items instead of just
+  // space-joining everything on a page into one blob (which is what produced the
+  // jumbled, run-together output before).
+  async function extractPdfAsParagraphs(pdf){
+    const { Paragraph, TextRun, PageBreak } = docx;
+    const allParagraphs = [];
+
+    for(let pageNum=1; pageNum<=pdf.numPages; pageNum++){
+      const page = await pdf.getPage(pageNum);
+      const content = await page.getTextContent();
+      const items = content.items.filter(it=> it.str !== undefined);
+      if(!items.length) continue;
+
+      // Group text items into visual lines using their Y position (items on the
+      // same line share ~the same Y in PDF coordinate space).
+      const yTolerance = 2.5;
+      const lines = [];
+      items.forEach(it=>{
+        const x = it.transform[4], y = it.transform[5];
+        let line = lines.find(l => Math.abs(l.y - y) <= yTolerance);
+        if(!line){ line = { y, items: [] }; lines.push(line); }
+        line.items.push({ x, str: it.str, width: it.width || (it.str.length*4), height: Math.abs(it.transform[3]) || 10 });
+      });
+      lines.sort((a,b)=> b.y - a.y); // PDF y grows upward — sort top-to-bottom
+      lines.forEach(l => l.items.sort((a,b)=> a.x - b.x));
+
+      // Turn each line's items into a clean text string, inserting a space only
+      // where there's an actual visual gap between words.
+      const lineTexts = lines.map(l=>{
+        let text = '', prevEnd = null;
+        l.items.forEach(it=>{
+          if(prevEnd !== null){
+            const gap = it.x - prevEnd;
+            if(gap > it.height * 0.2 && text && !text.endsWith(' ') && !it.str.startsWith(' ')) text += ' ';
+          }
+          text += it.str;
+          prevEnd = it.x + it.width;
+        });
+        return { text: text.replace(/[ \t]+/g,' ').trim(), y: l.y };
+      }).filter(l=> l.text.length > 0);
+
+      if(!lineTexts.length){
+        if(pageNum < pdf.numPages) allParagraphs.push(new Paragraph({ children:[ new PageBreak() ] }));
+        continue;
+      }
+
+      // Typical line-to-line spacing on this page, used to spot paragraph breaks
+      // (a gap noticeably bigger than normal usually means a blank line / new paragraph).
+      const gaps = [];
+      for(let i=1;i<lineTexts.length;i++) gaps.push(lineTexts[i-1].y - lineTexts[i].y);
+      const sortedGaps = gaps.slice().sort((a,b)=>a-b);
+      const median = sortedGaps.length ? sortedGaps[Math.floor(sortedGaps.length/2)] : 14;
+
+      let currentPara = lineTexts[0].text;
+      for(let i=1; i<lineTexts.length; i++){
+        const gap = lineTexts[i-1].y - lineTexts[i].y;
+        const isNewParagraph = median > 0 && gap > median * 1.45;
+        if(isNewParagraph){
+          allParagraphs.push(new Paragraph({ children:[ new TextRun(currentPara) ], spacing:{ after:180 } }));
+          currentPara = lineTexts[i].text;
+        } else {
+          currentPara += (currentPara.endsWith('-') ? '' : ' ') + lineTexts[i].text;
+        }
+      }
+      if(currentPara) allParagraphs.push(new Paragraph({ children:[ new TextRun(currentPara) ], spacing:{ after:180 } }));
+
+      if(pageNum < pdf.numPages){
+        allParagraphs.push(new Paragraph({ children:[ new PageBreak() ] }));
+      }
+    }
+    return allParagraphs;
+  }
+
+  document.getElementById('btn-p2w').onclick = async ()=>{
+    if(!p2wFile){ FF.toast('Add a PDF first'); return; }
+    setStatus('Extracting text…');
+    try{
+      const arrayBuffer = await p2wFile.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const paragraphs = await extractPdfAsParagraphs(pdf);
+      const { Document, Packer } = docx;
+      const doc = new Document({ sections: [{ children: paragraphs.length ? paragraphs : [new docx.Paragraph('(No extractable text found on this PDF — it may be a scanned image.)')] }] });
+      const blob = await Packer.toBlob(doc);
+      download(blob, p2wFile.name.replace(/\.pdf$/,'')+'.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      setStatus('Converted ' + p2wFile.name + ' to Word (' + pdf.numPages + ' pages).');
+      logHistory('PDF → Word', p2wFile.name);
+    }catch(err){ console.error(err); setStatus('Conversion failed: ' + err.message); }
+  };
+
+  /* ---- IMAGES TO PDF ---- */
+  let img2pdfFiles = [];
+  wireDropzone('dz-img2pdf','fi-img2pdf', (files)=>{
+    img2pdfFiles = img2pdfFiles.concat(files.filter(f=>f));
+    renderList('img2pdf-filelist', img2pdfFiles);
+  }, true);
+
+  // Re-encodes any image type through a canvas into a clean JPEG, so PNG/WEBP/GIF
+  // all embed reliably regardless of what pdf-lib can natively read.
+  async function fileToJpeg(file, quality){
+    const dataUrl = await new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = ()=> resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    const img = new Image();
+    await new Promise((resolve, reject)=>{ img.onload = resolve; img.onerror = reject; img.src = dataUrl; });
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(img, 0, 0);
+    const jpegUrl = canvas.toDataURL('image/jpeg', quality || 0.92);
+    const bytes = await (await fetch(jpegUrl)).arrayBuffer();
+    return { bytes, width: canvas.width, height: canvas.height };
+  }
+
+  document.getElementById('btn-img2pdf').onclick = async ()=>{
+    if(!img2pdfFiles.length){ FF.toast('Add at least one image'); return; }
+    setStatus('Building PDF…');
+    try{
+      const { PDFDocument } = PDFLib;
+      const doc = await PDFDocument.create();
+      for(let i=0; i<img2pdfFiles.length; i++){
+        setStatus(`Adding image ${i+1} of ${img2pdfFiles.length}…`);
+        const { bytes, width, height } = await fileToJpeg(img2pdfFiles[i]);
+        const jpegImage = await doc.embedJpg(bytes);
+        // cap the longest side so pages stay a sane PDF size
+        const maxDim = 1400;
+        const scale = Math.min(1, maxDim / Math.max(width, height));
+        const w = width * scale, h = height * scale;
+        const page = doc.addPage([w, h]);
+        page.drawImage(jpegImage, { x:0, y:0, width:w, height:h });
+      }
+      const out = await doc.save();
+      download(out, 'images.pdf', 'application/pdf');
+      setStatus('Created a PDF from ' + img2pdfFiles.length + ' image(s).');
+      logHistory('Images → PDF', img2pdfFiles.map(f=>f.name).join(', '));
+    }catch(err){ console.error(err); setStatus('Failed: ' + err.message); }
+  };
+
+  /* ---- PDF TO IMAGES ---- */
+  let pdf2imgFile = null;
+  wireDropzone('dz-pdf2img','fi-pdf2img', (files)=>{ pdf2imgFile = files[0]; renderList('pdf2img-filelist', [pdf2imgFile]); });
+
+  async function renderPdfPageToBlob(pdf, pageNum, scale, fmt){
+    const page = await pdf.getPage(pageNum);
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(viewport.width);
+    canvas.height = Math.round(viewport.height);
+    const ctx = canvas.getContext('2d');
+    if(fmt === 'image/jpeg'){ ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height); }
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    return new Promise(resolve => canvas.toBlob(resolve, fmt, 0.92));
+  }
+
+  document.getElementById('btn-pdf2img').onclick = async ()=>{
+    if(!pdf2imgFile){ FF.toast('Add a PDF first'); return; }
+    const fmt = document.getElementById('pdf2imgFormat').value;
+    const scale = parseFloat(document.getElementById('pdf2imgScale').value);
+    const ext = fmt === 'image/png' ? 'png' : 'jpg';
+    setStatus('Rendering pages…');
+    try{
+      const arrayBuffer = await pdf2imgFile.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const baseName = pdf2imgFile.name.replace(/\.pdf$/i, '');
+      if(pdf.numPages === 1){
+        const blob = await renderPdfPageToBlob(pdf, 1, scale, fmt);
+        download(blob, baseName + '.' + ext, fmt);
+        setStatus('Converted 1 page to ' + ext.toUpperCase() + '.');
+      } else {
+        const zip = new JSZip();
+        for(let i=1; i<=pdf.numPages; i++){
+          setStatus(`Rendering page ${i} of ${pdf.numPages}…`);
+          const blob = await renderPdfPageToBlob(pdf, i, scale, fmt);
+          zip.file(`${baseName}-page-${String(i).padStart(2,'0')}.${ext}`, blob);
+        }
+        setStatus('Zipping images…');
+        const zipBlob = await zip.generateAsync({ type:'blob' });
+        download(zipBlob, baseName + '-images.zip', 'application/zip');
+        setStatus('Converted ' + pdf.numPages + ' pages to ' + ext.toUpperCase() + ' (zipped).');
+      }
+      logHistory('PDF → Images', pdf2imgFile.name);
+    }catch(err){ console.error(err); setStatus('Failed: ' + err.message); }
+  };
+
+  function logHistory(action, detail){
+    if(!FF.isLoggedIn()) return;
+    FF.pushHistory('pdf', { action, detail });
+    renderHistory();
+  }
+  function renderHistory(){
+    const d = FF.getData();
+    const list = document.getElementById('historyList');
+    const items = (d && d.pdf) || [];
+    if(!items.length){ list.innerHTML = '<div class="empty-state">No PDF activity yet.</div>'; return; }
+    list.innerHTML = items.map(it=>`
+      <div class="history-item" data-id="${it.id}">
+        <div><div class="name">${it.action}</div><div class="sub">${it.detail}</div></div>
+        <span class="badge badge-muted">${new Date(it.ts).toLocaleDateString()}</span>
+      </div>`).join('');
+    list.querySelectorAll('.history-item').forEach(el=>{
+      el.onclick = ()=>{
+        const it = items.find(x=>x.id===el.dataset.id);
+        if(!it) return;
+        FF.openInfoModal({
+          title: it.action,
+          rows: [
+            { label:'Details', value: it.detail },
+            { label:'When', value: new Date(it.ts).toLocaleString() },
+          ],
+          note: 'PDF files are processed entirely in your browser and are never uploaded — only this activity summary is saved.'
+        });
+      };
+    });
+  }
+  renderHistory();
+</script>
+</body>
+</html>

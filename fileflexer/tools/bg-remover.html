@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Remove Background — FileFlexer</title>
+<link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+<link rel="icon" href="../assets/logo.png" type="image/png">
+<link rel="stylesheet" href="../css/style.css">
+<script>try{document.documentElement.setAttribute("data-theme", localStorage.getItem("ff_theme")==="light"?"light":"dark");}catch(e){}</script>
+<style>
+.checker{background-image:linear-gradient(45deg,#2a3342 25%,transparent 25%),linear-gradient(-45deg,#2a3342 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#2a3342 75%),linear-gradient(-45deg,transparent 75%,#2a3342 75%);background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0;}
+#editCanvas{cursor:crosshair;max-width:100%;border-radius:10px;border:1px solid var(--border);touch-action:none;}
+.tool-toggle{display:flex;gap:8px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:4px;}
+.tool-toggle button{flex:1;background:transparent;border:none;color:var(--muted);padding:8px 10px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;}
+.tool-toggle button.active{background:var(--accent);color:#04121a;}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><img class="logo-mark" src="../assets/logo.png" alt="FileFlexer logo">FileFlexer</a>
+    <div class="nav-links">
+      <a href="../index.html">Home</a>
+      <a href="../index.html#services">Tools</a>
+      <a href="../about.html">About</a>
+    </div>
+    <div class="nav-actions" id="navAuthSlot"></div>
+  </div>
+</nav>
+
+<div class="tool-shell wrap">
+  <div class="tool-header">
+    <a href="../index.html#services" class="back">← Back to tools</a>
+    <h1>✂️ Remove Background</h1>
+    <p>Removes the background from a photo using an AI model that runs entirely in your browser, then lets you touch up any rough edges by hand. First run downloads a small model (cached after that).</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="dropzone" id="dropzone">
+        <div class="dz-icon">⇧</div>
+        <div class="dz-title">Click to choose a photo, or drag one here</div>
+        <div class="dz-sub">Works best with a clear subject, well-lit and in focus</div>
+        <input type="file" id="fileInput" accept="image/*" style="display:none;">
+      </div>
+      <div id="status" class="muted" style="color:var(--muted);font-size:13.5px;margin-top:14px;"></div>
+      <div id="progressTrack" style="display:none;height:6px;border-radius:4px;background:var(--surface-2);overflow:hidden;margin-top:8px;">
+        <div id="progressBar" style="height:100%;width:0%;background:linear-gradient(135deg,var(--accent),var(--accent-2));transition:width .2s;"></div>
+      </div>
+      <button class="btn btn-sm" id="retryBtn" style="display:none;margin-top:10px;">Try again</button>
+
+      <div id="resultArea" style="display:none;margin-top:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div class="muted" style="color:var(--muted);font-size:12.5px;">Result — touch up any rough spots below</div>
+          <button class="btn btn-sm" id="compareBtn">Show original</button>
+        </div>
+        <canvas id="editCanvas" class="checker"></canvas>
+
+        <div style="margin-top:16px;">
+          <div class="tool-toggle" style="margin-bottom:12px;">
+            <button id="modeEraseBtn" class="active">🧽 Erase</button>
+            <button id="modeRestoreBtn">🖌️ Restore</button>
+          </div>
+          <div class="field" style="margin-bottom:10px;">
+            <label>Brush size: <span id="brushLabel">28</span>px</label>
+            <input type="range" id="brushSize" min="6" max="90" value="28">
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-sm" id="undoBtn">↶ Undo</button>
+            <button class="btn btn-sm" id="resetBtn">Reset to AI result</button>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="downloadBtn" style="margin-top:18px;width:100%;">Download PNG</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin-top:0;">Recent results</h3>
+      <p class="muted" style="color:var(--muted);font-size:12.5px;margin-top:-8px;">Click any item to see the details.</p>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="authOverlay">
+  <div class="modal">
+    <button class="modal-close" id="authClose">✕</button>
+    <div class="modal-tabs" id="authTabs">
+      <div class="modal-tab" id="tabLogin">Sign in</div>
+      <div class="modal-tab active" id="tabSignup">Create account</div>
+    </div>
+    <h2 id="authTitle">Welcome to FileFlexer</h2>
+    <p class="sub" id="authSub">Sign in or create a free account to save your work.</p>
+    <form id="authForm">
+      <div class="field" id="nameField" style="display:none;">
+        <label>Name</label>
+        <input type="text" id="authName" placeholder="Your name">
+      </div>
+      <div class="field" id="emailField">
+        <label>Email</label>
+        <input type="email" id="authEmail" placeholder="you@example.com" required>
+      </div>
+      <div class="field" id="passwordField">
+        <label>Password</label>
+        <input type="password" id="authPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="field" id="otpField" style="display:none;">
+        <label>6-digit code</label>
+        <input type="text" id="authOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+        <div class="otp-resend"><span class="muted" style="color:var(--muted);">Didn't get it?</span><a href="#" id="otpResend">Resend code</a></div>
+      </div>
+      <div class="field" id="newPasswordField" style="display:none;">
+        <label>New password</label>
+        <input type="password" id="authNewPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="modal-error" id="authError"></div>
+      <button type="submit" class="btn btn-primary modal-submit" id="authSubmit">Create account</button>
+      <div class="modal-links" id="modalLinks"><a href="#" id="forgotLink">Forgot password?</a></div>
+      <div class="modal-links" id="backLinkWrap" style="display:none;"><a href="#" id="backLink">← Back</a></div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/auth.js"></script>
+<script src="../js/main.js"></script>
+<script type="module">
+  if(!FF.isLoggedIn()) FF.openAuthModal(location.pathname.split('/').pop(), 'signup');
+
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const statusEl = document.getElementById('status');
+  const progressTrack = document.getElementById('progressTrack');
+  const progressBar = document.getElementById('progressBar');
+  const retryBtn = document.getElementById('retryBtn');
+  dropzone.onclick = ()=>fileInput.click();
+  dropzone.ondragover = (e)=>{ e.preventDefault(); dropzone.classList.add('drag'); };
+  dropzone.ondragleave = ()=> dropzone.classList.remove('drag');
+  dropzone.ondrop = (e)=>{ e.preventDefault(); dropzone.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); };
+  fileInput.onchange = ()=> handleFile(fileInput.files[0]);
+
+  let removeBackground = null;
+  async function loadLib(){
+    if(removeBackground) return removeBackground;
+    statusEl.textContent = 'Loading background-removal model…';
+    const mod = await import('https://esm.sh/@imgly/background-removal@1.5.5');
+    removeBackground = mod.removeBackground;
+    return removeBackground;
+  }
+
+  // Large photos are the #1 cause of the tool stalling or failing — downscale
+  // to a sane max dimension before feeding the model, which is both faster and far more reliable.
+  const MAX_INPUT_DIM = 1800;
+  function prepareInput(file){
+    return new Promise((resolve, reject)=>{
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = ()=>{
+        let { width, height } = img;
+        if(Math.max(width, height) <= MAX_INPUT_DIM){
+          URL.revokeObjectURL(url);
+          resolve({ file, width, height });
+          return;
+        }
+        const scale = MAX_INPUT_DIM / Math.max(width, height);
+        const w = Math.round(width*scale), h = Math.round(height*scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob)=>{
+          URL.revokeObjectURL(url);
+          if(!blob){ reject(new Error('Could not prepare image')); return; }
+          resolve({ file: new File([blob], file.name, { type: 'image/png' }), width: w, height: h });
+        }, 'image/png');
+      };
+      img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error('Could not read image')); };
+      img.src = url;
+    });
+  }
+
+  // Smooths jagged/aliased edges in the alpha channel — a cheap but effective
+  // "matte refinement" pass that noticeably reduces harsh, stair-stepped cutout edges.
+  function smoothAlphaEdges(ctx, w, h){
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const src = imgData.data;
+    const out = new Uint8ClampedArray(src.length);
+    out.set(src);
+    for(let y=1; y<h-1; y++){
+      for(let x=1; x<w-1; x++){
+        const i = (y*w+x)*4;
+        const a = src[i+3];
+        // only touch semi/edge pixels — leave solid interior and solid-empty background alone
+        if(a > 0 && a < 255){
+          let sum = 0;
+          for(let dy=-1; dy<=1; dy++){
+            for(let dx=-1; dx<=1; dx++){
+              sum += src[((y+dy)*w+(x+dx))*4 + 3];
+            }
+          }
+          out[i+3] = Math.round(sum/9);
+        }
+      }
+    }
+    imgData.data.set(out);
+    ctx.putImageData(imgData, 0, 0);
+  }
+
+  let lastFileName = 'image.png', lastFile = null;
+  let editCanvas, editCtx, origCanvasFull, brushMode = 'erase', brushSize = 28;
+  let undoStack = [];
+
+  function pushUndo(){
+    undoStack.push(editCtx.getImageData(0, 0, editCanvas.width, editCanvas.height));
+    if(undoStack.length > 20) undoStack.shift();
+  }
+
+  async function handleFile(file){
+    if(!file || !file.type.startsWith('image/')){ FF.toast('Please choose an image file'); return; }
+    lastFile = file;
+    lastFileName = file.name;
+    retryBtn.style.display = 'none';
+    document.getElementById('resultArea').style.display = 'none';
+    progressTrack.style.display = 'block';
+    progressBar.style.width = '5%';
+    statusEl.textContent = 'Preparing image…';
+
+    try{
+      const { file: prepared, width, height } = await prepareInput(file);
+      progressBar.style.width = '20%';
+      const rb = await loadLib();
+      progressBar.style.width = '35%';
+      statusEl.textContent = 'Removing background — this can take up to 30s the first time…';
+      const blob = await rb(prepared, {
+        model: 'medium', // noticeably crisper edges than the default "small" model, worth the extra load time
+        output: { format: 'image/png', quality: 1 },
+        progress: (key, current, total)=>{
+          if(total){
+            const pct = 35 + Math.round((current/total) * 50);
+            progressBar.style.width = Math.min(pct, 88) + '%';
+          }
+        }
+      });
+      progressBar.style.width = '92%';
+      statusEl.textContent = 'Refining edges…';
+
+      // Set up the editable canvas at the processed image's resolution
+      const resultUrl = URL.createObjectURL(blob);
+      const resultImg = await loadImage(resultUrl);
+      const origImg = await loadImage(URL.createObjectURL(prepared));
+
+      editCanvas = document.getElementById('editCanvas');
+      editCanvas.width = width; editCanvas.height = height;
+      editCtx = editCanvas.getContext('2d', { willReadFrequently: true });
+      editCtx.drawImage(resultImg, 0, 0, width, height);
+      smoothAlphaEdges(editCtx, width, height);
+      URL.revokeObjectURL(resultUrl);
+
+      // Keep a full-res copy of the original photo to sample from when the user uses the Restore brush
+      origCanvasFull = document.createElement('canvas');
+      origCanvasFull.width = width; origCanvasFull.height = height;
+      origCanvasFull.getContext('2d').drawImage(origImg, 0, 0, width, height);
+
+      undoStack = [];
+      pushUndo();
+
+      document.getElementById('resultArea').style.display = 'block';
+      statusEl.textContent = 'Done — touch up any rough edges below, then download.';
+      setTimeout(()=>{ progressTrack.style.display = 'none'; }, 400);
+
+      if(FF.isLoggedIn()){
+        const c = document.createElement('canvas'); c.width=96; c.height=96;
+        c.getContext('2d').drawImage(editCanvas, 0, 0, 96, 96);
+        FF.pushHistory('bg', { name: file.name, thumb: c.toDataURL('image/png') });
+        renderHistory();
+      }
+    }catch(err){
+      console.error(err);
+      progressTrack.style.display = 'none';
+      statusEl.textContent = 'Something went wrong — ' + (err && err.message ? err.message : 'please check your connection and try again.');
+      retryBtn.style.display = 'inline-flex';
+      FF.toast('Background removal failed');
+    }
+  }
+
+  function loadImage(src){
+    return new Promise((resolve,reject)=>{
+      const img = new Image();
+      img.onload = ()=>resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+
+  retryBtn.onclick = ()=>{ if(lastFile) handleFile(lastFile); };
+
+  // ---- Touch-up brush ----
+  document.getElementById('modeEraseBtn').onclick = ()=>{
+    brushMode = 'erase';
+    document.getElementById('modeEraseBtn').classList.add('active');
+    document.getElementById('modeRestoreBtn').classList.remove('active');
+  };
+  document.getElementById('modeRestoreBtn').onclick = ()=>{
+    brushMode = 'restore';
+    document.getElementById('modeRestoreBtn').classList.add('active');
+    document.getElementById('modeEraseBtn').classList.remove('active');
+  };
+  document.getElementById('brushSize').oninput = (e)=>{
+    brushSize = parseInt(e.target.value, 10);
+    document.getElementById('brushLabel').textContent = brushSize;
+  };
+
+  let painting = false;
+  function canvasPoint(e){
+    const rect = editCanvas.getBoundingClientRect();
+    const scaleX = editCanvas.width / rect.width, scaleY = editCanvas.height / rect.height;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+  }
+  function brushAt(x, y){
+    const r = brushSize / 2;
+    if(brushMode === 'erase'){
+      editCtx.save();
+      editCtx.globalCompositeOperation = 'destination-out';
+      editCtx.beginPath();
+      editCtx.arc(x, y, r, 0, Math.PI*2);
+      editCtx.fill();
+      editCtx.restore();
+    } else {
+      editCtx.save();
+      editCtx.beginPath();
+      editCtx.arc(x, y, r, 0, Math.PI*2);
+      editCtx.clip();
+      editCtx.drawImage(origCanvasFull, 0, 0);
+      editCtx.restore();
+    }
+  }
+  function startPaint(e){
+    if(!editCanvas) return;
+    e.preventDefault();
+    if(showingOriginal){
+      showingOriginal = false;
+      document.getElementById('compareBtn').textContent = 'Show original';
+      const prev = undoStack[undoStack.length-1];
+      if(prev) editCtx.putImageData(prev, 0, 0);
+    }
+    painting = true;
+    pushUndo();
+    const p = canvasPoint(e);
+    brushAt(p.x, p.y);
+  }
+  function movePaint(e){
+    if(!painting) return;
+    e.preventDefault();
+    const p = canvasPoint(e);
+    brushAt(p.x, p.y);
+  }
+  function endPaint(){ painting = false; }
+
+  document.getElementById('editCanvas').addEventListener('mousedown', startPaint);
+  document.getElementById('editCanvas').addEventListener('mousemove', movePaint);
+  window.addEventListener('mouseup', endPaint);
+  document.getElementById('editCanvas').addEventListener('touchstart', startPaint, { passive:false });
+  document.getElementById('editCanvas').addEventListener('touchmove', movePaint, { passive:false });
+  window.addEventListener('touchend', endPaint);
+
+  document.getElementById('undoBtn').onclick = ()=>{
+    if(undoStack.length <= 1) return;
+    undoStack.pop();
+    const prev = undoStack[undoStack.length-1];
+    editCtx.putImageData(prev, 0, 0);
+  };
+  document.getElementById('resetBtn').onclick = ()=>{
+    if(!lastFile) return;
+    handleFile(lastFile);
+  };
+
+  let showingOriginal = false;
+  document.getElementById('compareBtn').onclick = ()=>{
+    if(!editCanvas || !origCanvasFull) return;
+    showingOriginal = !showingOriginal;
+    const btn = document.getElementById('compareBtn');
+    if(showingOriginal){
+      editCtx.drawImage(origCanvasFull, 0, 0);
+      btn.textContent = 'Show result';
+    } else {
+      const prev = undoStack[undoStack.length-1];
+      if(prev) editCtx.putImageData(prev, 0, 0);
+      btn.textContent = 'Show original';
+    }
+  };
+
+  document.getElementById('downloadBtn').onclick = ()=>{
+    if(!editCanvas) return;
+    editCanvas.toBlob((blob)=>{
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'no-bg-' + lastFileName.replace(/\.[^.]+$/,'') + '.png';
+      a.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  };
+
+  function renderHistory(){
+    const d = FF.getData();
+    const list = document.getElementById('historyList');
+    const items = (d && d.bg) || [];
+    if(!items.length){ list.innerHTML = '<div class="empty-state">No results saved yet.</div>'; return; }
+    list.innerHTML = items.map(it=>`
+      <div class="history-item" data-id="${it.id}">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <img src="${it.thumb}" class="checker" style="width:36px;height:36px;border-radius:8px;object-fit:cover;">
+          <div><div class="name">${it.name}</div><div class="sub">${new Date(it.ts).toLocaleString()}</div></div>
+        </div>
+      </div>`).join('');
+    list.querySelectorAll('.history-item').forEach(el=>{
+      el.onclick = ()=>{
+        const it = items.find(x=>x.id===el.dataset.id);
+        if(!it) return;
+        FF.openInfoModal({
+          title: it.name,
+          thumb: it.thumb,
+          thumbClass: 'checker',
+          rows: [
+            { label:'Processed', value: new Date(it.ts).toLocaleString() },
+          ],
+          note: 'Only a small preview thumbnail is saved to your account — re-upload the photo here any time to remove its background again at full resolution.'
+        });
+      };
+    });
+  }
+  renderHistory();
+</script>
+</body>
+</html>

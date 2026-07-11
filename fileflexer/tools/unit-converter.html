@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit Converter — FileFlexer</title>
+<link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+<link rel="icon" href="../assets/logo.png" type="image/png">
+<link rel="stylesheet" href="../css/style.css">
+<script>try{document.documentElement.setAttribute("data-theme", localStorage.getItem("ff_theme")==="light"?"light":"dark");}catch(e){}</script>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><img class="logo-mark" src="../assets/logo.png" alt="FileFlexer logo">FileFlexer</a>
+    <div class="nav-links">
+      <a href="../index.html">Home</a>
+      <a href="../index.html#services">Tools</a>
+      <a href="../about.html">About</a>
+    </div>
+    <div class="nav-actions" id="navAuthSlot"></div>
+  </div>
+</nav>
+
+<div class="tool-shell wrap">
+  <div class="tool-header">
+    <a href="../index.html#services" class="back">← Back to tools</a>
+    <h1>⇄ Unit Converter</h1>
+    <p>Distance, weight, temperature, digital storage, and number-base conversions — all instant, all in your browser.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-cat="length">Length &amp; Distance</button>
+    <button class="tabbtn" data-cat="weight">Weight &amp; Mass</button>
+    <button class="tabbtn" data-cat="temp">Temperature</button>
+    <button class="tabbtn" data-cat="storage">Storage &amp; Data</button>
+    <button class="tabbtn" data-cat="base">Number Base (CS)</button>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+
+      <!-- Linear categories: length, weight, temp, storage share this form -->
+      <div id="linearForm">
+        <p class="cat-desc" id="catDesc">Convert between metric and imperial distances, from millimeters to light years.</p>
+        <div class="grid-2">
+          <div class="field">
+            <label>From</label>
+            <select id="fromUnit"></select>
+          </div>
+          <div class="field">
+            <label>To</label>
+            <select id="toUnit"></select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Value</label>
+            <input type="number" id="valueInput" value="1">
+          </div>
+          <div class="field">
+            <label>Result</label>
+            <input type="text" id="resultOutput" readonly style="font-weight:700;">
+          </div>
+        </div>
+        <button class="btn btn-primary" id="convertBtn">Convert &amp; save</button>
+      </div>
+
+      <!-- Number base converter: text-based, not a linear scale -->
+      <div id="baseForm" style="display:none;">
+        <p class="cat-desc">Convert whole numbers between Binary, Decimal, Octal, and Hexadecimal — covers every direction computer science students need.</p>
+        <div class="grid-2">
+          <div class="field">
+            <label>From base</label>
+            <select id="fromBase">
+              <option value="decimal">Decimal (Base 10)</option>
+              <option value="binary">Binary (Base 2)</option>
+              <option value="octal">Octal (Base 8)</option>
+              <option value="hex">Hexadecimal (Base 16)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>To base</label>
+            <select id="toBase">
+              <option value="binary">Binary (Base 2)</option>
+              <option value="decimal">Decimal (Base 10)</option>
+              <option value="octal">Octal (Base 8)</option>
+              <option value="hex">Hexadecimal (Base 16)</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Value</label>
+            <input type="text" id="baseValueInput" value="42" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field">
+            <label>Result</label>
+            <input type="text" id="baseResultOutput" readonly style="font-weight:700;">
+          </div>
+        </div>
+        <div class="modal-error" id="baseError" style="margin-bottom:14px;"></div>
+        <button class="btn btn-primary" id="baseConvertBtn">Convert &amp; save</button>
+      </div>
+
+    </div>
+
+    <div class="panel">
+      <h3 style="margin-top:0;">Recent conversions</h3>
+      <p class="muted" style="color:var(--muted);font-size:12.5px;margin-top:-8px;">Click any item to see the details.</p>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="authOverlay">
+  <div class="modal">
+    <button class="modal-close" id="authClose">✕</button>
+    <div class="modal-tabs" id="authTabs">
+      <div class="modal-tab" id="tabLogin">Sign in</div>
+      <div class="modal-tab active" id="tabSignup">Create account</div>
+    </div>
+    <h2 id="authTitle">Welcome to FileFlexer</h2>
+    <p class="sub" id="authSub">Sign in or create a free account to save your work.</p>
+    <form id="authForm">
+      <div class="field" id="nameField" style="display:none;">
+        <label>Name</label>
+        <input type="text" id="authName" placeholder="Your name">
+      </div>
+      <div class="field" id="emailField">
+        <label>Email</label>
+        <input type="email" id="authEmail" placeholder="you@example.com" required>
+      </div>
+      <div class="field" id="passwordField">
+        <label>Password</label>
+        <input type="password" id="authPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="field" id="otpField" style="display:none;">
+        <label>6-digit code</label>
+        <input type="text" id="authOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+        <div class="otp-resend"><span class="muted" style="color:var(--muted);">Didn't get it?</span><a href="#" id="otpResend">Resend code</a></div>
+      </div>
+      <div class="field" id="newPasswordField" style="display:none;">
+        <label>New password</label>
+        <input type="password" id="authNewPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="modal-error" id="authError"></div>
+      <button type="submit" class="btn btn-primary modal-submit" id="authSubmit">Create account</button>
+      <div class="modal-links" id="modalLinks"><a href="#" id="forgotLink">Forgot password?</a></div>
+      <div class="modal-links" id="backLinkWrap" style="display:none;"><a href="#" id="backLink">← Back</a></div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/auth.js"></script>
+<script src="../js/main.js"></script>
+<script>
+  if(!FF.isLoggedIn()) FF.openAuthModal(location.pathname.split('/').pop(), 'signup');
+
+  /* ================= Linear (factor-based) categories ================= */
+  // Length & Distance — base unit: meters
+  const LENGTH = {
+    nm:1e-9, um:1e-6, mm:0.001, cm:0.01, m:1, km:1000,
+    inch:0.0254, foot:0.3048, yard:0.9144, mile:1609.344,
+    nauticalMile:1852, furlong:201.168, au:1.495978707e11, lightYear:9.4607e15
+  };
+  // Weight & Mass — base unit: kilograms
+  const WEIGHT = {
+    mg:0.000001, g:0.001, kg:1, tonne:1000,
+    oz:0.028349523125, lb:0.45359237, stone:6.35029318,
+    shortTon:907.18474, longTon:1016.0469088
+  };
+  // Storage & Data — base unit: bytes (binary/1024 convention)
+  const STORAGE = {
+    bit:0.125, Kb:128, Mb:131072, Gb:134217728,
+    B:1, KB:1024, MB:1048576, GB:1073741824, TB:1099511627776, PB:1125899906842624
+  };
+
+  const LABELS = {
+    nm:'Nanometers', um:'Micrometers', mm:'Millimeters', cm:'Centimeters', m:'Meters', km:'Kilometers',
+    inch:'Inches', foot:'Feet', yard:'Yards', mile:'Miles', nauticalMile:'Nautical miles',
+    furlong:'Furlongs', au:'Astronomical units', lightYear:'Light years',
+    mg:'Milligrams', g:'Grams', kg:'Kilograms', tonne:'Metric tons',
+    oz:'Ounces', lb:'Pounds', stone:'Stone', shortTon:'US (short) tons', longTon:'UK (long) tons',
+    bit:'Bits', Kb:'Kilobits', Mb:'Megabits', Gb:'Gigabits',
+    B:'Bytes', KB:'Kilobytes', MB:'Megabytes', GB:'Gigabytes', TB:'Terabytes', PB:'Petabytes',
+    c:'Celsius', f:'Fahrenheit', k:'Kelvin'
+  };
+
+  const CATEGORY_DESC = {
+    length: 'Convert between metric and imperial distances, from millimeters to light years.',
+    weight: 'Convert between metric and imperial weight/mass units, from milligrams to long tons.',
+    temp: 'Convert between Celsius, Fahrenheit, and Kelvin.',
+    storage: 'Convert digital storage and data-transfer sizes — bits, bytes, KB, MB, GB, TB, PB.',
+  };
+
+  const CATEGORY_UNITS = {
+    length: Object.keys(LENGTH),
+    weight: Object.keys(WEIGHT),
+    temp: ['c','f','k'],
+    storage: Object.keys(STORAGE),
+  };
+
+  let currentCategory = 'length';
+  const fromUnit = document.getElementById('fromUnit');
+  const toUnit = document.getElementById('toUnit');
+
+  function populateUnits(){
+    const keys = CATEGORY_UNITS[currentCategory];
+    fromUnit.innerHTML = keys.map(k=>`<option value="${k}">${LABELS[k]}</option>`).join('');
+    toUnit.innerHTML = keys.map(k=>`<option value="${k}">${LABELS[k]}</option>`).join('');
+    toUnit.selectedIndex = keys.length > 1 ? 1 : 0;
+    document.getElementById('catDesc').textContent = CATEGORY_DESC[currentCategory];
+  }
+
+  function toCelsius(v,u){ return u==='c'?v : u==='f'?(v-32)*5/9 : v-273.15; }
+  function fromCelsius(v,u){ return u==='c'?v : u==='f'?(v*9/5)+32 : v+273.15; }
+
+  function convertLinear(){
+    const val = parseFloat(document.getElementById('valueInput').value);
+    if(isNaN(val)) return null;
+    let result;
+    if(currentCategory === 'temp'){
+      result = fromCelsius(toCelsius(val, fromUnit.value), toUnit.value);
+    } else {
+      const table = currentCategory === 'length' ? LENGTH : currentCategory === 'weight' ? WEIGHT : STORAGE;
+      const base = val * table[fromUnit.value];
+      result = base / table[toUnit.value];
+    }
+    // keep small/huge numbers readable
+    if(Math.abs(result) > 0 && (Math.abs(result) < 0.0001 || Math.abs(result) >= 1e15)){
+      return result.toExponential(4);
+    }
+    return Math.round(result * 1e6) / 1e6;
+  }
+
+  document.getElementById('convertBtn').onclick = ()=>{
+    const result = convertLinear();
+    if(result===null){ FF.toast('Enter a valid number'); return; }
+    document.getElementById('resultOutput').value = result;
+    if(FF.isLoggedIn()){
+      FF.pushHistory('unit', {
+        text: `${document.getElementById('valueInput').value} ${LABELS[fromUnit.value]} = ${result} ${LABELS[toUnit.value]}`
+      });
+      renderHistory();
+    }
+  };
+
+  /* ================= Number Base converter (CS) ================= */
+  const BASE_PREFIX = { binary:'0b', octal:'0o', hex:'0x', decimal:'' };
+  const BASE_REGEX = { binary:/^[01]+$/, octal:/^[0-7]+$/, hex:/^[0-9a-fA-F]+$/, decimal:/^[0-9]+$/ };
+  const BASE_RADIX = { binary:2, octal:8, hex:16, decimal:10 };
+  const BASE_LABEL = { binary:'Binary', octal:'Octal', hex:'Hexadecimal', decimal:'Decimal' };
+
+  function convertBase(){
+    const errEl = document.getElementById('baseError');
+    errEl.textContent = '';
+    const fromB = document.getElementById('fromBase').value;
+    const toB = document.getElementById('toBase').value;
+    const raw = document.getElementById('baseValueInput').value.trim().replace(/^0[bBoOxX]/, '');
+    if(!raw){ errEl.textContent = 'Enter a value to convert.'; return null; }
+    if(!BASE_REGEX[fromB].test(raw)){
+      errEl.textContent = `That's not a valid ${BASE_LABEL[fromB]} number.`;
+      return null;
+    }
+    try{
+      const n = BigInt(BASE_PREFIX[fromB] + raw);
+      const result = n.toString(BASE_RADIX[toB]);
+      return toB === 'hex' ? result.toUpperCase() : result;
+    }catch(e){
+      errEl.textContent = 'Could not convert that value.';
+      return null;
+    }
+  }
+
+  document.getElementById('baseConvertBtn').onclick = ()=>{
+    const result = convertBase();
+    if(result===null) return;
+    document.getElementById('baseResultOutput').value = result;
+    if(FF.isLoggedIn()){
+      const fromB = document.getElementById('fromBase').value;
+      const toB = document.getElementById('toBase').value;
+      const raw = document.getElementById('baseValueInput').value.trim();
+      FF.pushHistory('unit', {
+        text: `${raw} (${BASE_LABEL[fromB]}) = ${result} (${BASE_LABEL[toB]})`
+      });
+      renderHistory();
+    }
+  };
+
+  /* ================= Category tabs ================= */
+  document.querySelectorAll('.tabbtn').forEach(btn=>{
+    btn.onclick = ()=>{
+      document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentCategory = btn.dataset.cat;
+      if(currentCategory === 'base'){
+        document.getElementById('linearForm').style.display = 'none';
+        document.getElementById('baseForm').style.display = 'block';
+      } else {
+        document.getElementById('baseForm').style.display = 'none';
+        document.getElementById('linearForm').style.display = 'block';
+        populateUnits();
+      }
+    };
+  });
+  populateUnits();
+
+  /* ================= History ================= */
+  function renderHistory(){
+    const d = FF.getData();
+    const list = document.getElementById('historyList');
+    const items = (d && d.unit) || [];
+    if(!items.length){ list.innerHTML = '<div class="empty-state">No conversions yet.</div>'; return; }
+    list.innerHTML = items.map(it=>`
+      <div class="history-item" data-id="${it.id}">
+        <div><div class="name">${it.text}</div><div class="sub">${new Date(it.ts).toLocaleString()}</div></div>
+      </div>`).join('');
+    list.querySelectorAll('.history-item').forEach(el=>{
+      el.onclick = ()=>{
+        const it = items.find(x=>x.id===el.dataset.id);
+        if(!it) return;
+        FF.openInfoModal({
+          title: 'Unit conversion',
+          rows: [
+            { label:'Conversion', value: it.text },
+            { label:'When', value: new Date(it.ts).toLocaleString() },
+          ]
+        });
+      };
+    });
+  }
+  renderHistory();
+</script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Account — FileFlexer</title>
+<link rel="icon" href="assets/favicon.ico" type="image/x-icon">
+<link rel="icon" href="assets/logo.png" type="image/png">
+<link rel="stylesheet" href="css/style.css">
+<script>try{document.documentElement.setAttribute("data-theme", localStorage.getItem("ff_theme")==="light"?"light":"dark");}catch(e){}</script>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="logo"><img class="logo-mark" src="assets/logo.png" alt="FileFlexer logo">FileFlexer</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#services">Tools</a>
+      <a href="about.html">About</a>
+    </div>
+    <div class="nav-actions" id="navAuthSlot"></div>
+  </div>
+</nav>
+
+<div class="tool-shell wrap">
+  <div class="tool-header">
+    <h1>Your account</h1>
+    <p>Manage your profile and see everything you've saved across FileFlexer.</p>
+  </div>
+
+  <div class="panel" style="margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+      <div class="avatar-wrap">
+        <div class="avatar-fallback" id="avatarInitial">F</div>
+        <img id="avatarImg" style="display:none;">
+        <div class="avatar-edit-btn" id="avatarEditBtn" title="Change photo">✎</div>
+        <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:18px;" id="profileName">—</div>
+        <div class="muted" id="profileEmail" style="color:var(--muted);font-size:13.5px;">—</div>
+        <button class="btn btn-sm" id="removeAvatarBtn" style="margin-top:8px;display:none;">Remove photo</button>
+      </div>
+    </div>
+    <form id="nameForm" style="max-width:340px;">
+      <div class="field">
+        <label>Display name</label>
+        <input type="text" id="nameInput" required>
+      </div>
+      <button class="btn btn-primary btn-sm" type="submit">Save name</button>
+    </form>
+  </div>
+
+  <div class="section-head" style="margin-bottom:20px;">
+    <h2 style="font-size:20px;">Your activity</h2>
+    <p>A quick summary of what's saved to your account. Open any tool to see the full history.</p>
+  </div>
+  <div class="grid-3" id="activityGrid"></div>
+
+  <div class="panel" style="margin-top:30px;">
+    <button class="btn btn-danger" id="logoutBtn">Log out</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="authOverlay">
+  <div class="modal">
+    <button class="modal-close" id="authClose">✕</button>
+    <div class="modal-tabs" id="authTabs">
+      <div class="modal-tab" id="tabLogin">Sign in</div>
+      <div class="modal-tab active" id="tabSignup">Create account</div>
+    </div>
+    <h2 id="authTitle">Welcome to FileFlexer</h2>
+    <p class="sub" id="authSub">Sign in or create a free account to save your work.</p>
+    <form id="authForm">
+      <div class="field" id="nameField" style="display:none;">
+        <label>Name</label>
+        <input type="text" id="authName" placeholder="Your name">
+      </div>
+      <div class="field" id="emailField">
+        <label>Email</label>
+        <input type="email" id="authEmail" placeholder="you@example.com" required>
+      </div>
+      <div class="field" id="passwordField">
+        <label>Password</label>
+        <input type="password" id="authPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="field" id="otpField" style="display:none;">
+        <label>6-digit code</label>
+        <input type="text" id="authOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+        <div class="otp-resend"><span class="muted" style="color:var(--muted);">Didn't get it?</span><a href="#" id="otpResend">Resend code</a></div>
+      </div>
+      <div class="field" id="newPasswordField" style="display:none;">
+        <label>New password</label>
+        <input type="password" id="authNewPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="modal-error" id="authError"></div>
+      <button type="submit" class="btn btn-primary modal-submit" id="authSubmit">Create account</button>
+      <div class="modal-links" id="modalLinks"><a href="#" id="forgotLink">Forgot password?</a></div>
+      <div class="modal-links" id="backLinkWrap" style="display:none;"><a href="#" id="backLink">← Back</a></div>
+    </form>
+  </div>
+</div>
+<script src="js/auth.js"></script>
+<script src="js/main.js"></script>
+<script>
+  if(!FF.isLoggedIn()){ FF.openAuthModal('profile.html','login'); }
+  const p = FF.getProfile();
+  function renderAvatar(){
+    const prof = FF.getProfile();
+    const img = document.getElementById('avatarImg');
+    const fallback = document.getElementById('avatarInitial');
+    const removeBtn = document.getElementById('removeAvatarBtn');
+    if(prof && prof.avatar){
+      img.src = prof.avatar;
+      img.style.display = 'block';
+      fallback.style.display = 'none';
+      removeBtn.style.display = 'inline-flex';
+    } else {
+      img.style.display = 'none';
+      fallback.style.display = 'flex';
+      fallback.textContent = ((prof&&(prof.name||prof.email))||'F').charAt(0).toUpperCase();
+      removeBtn.style.display = 'none';
+    }
+  }
+  if(p){
+    document.getElementById('profileName').textContent = p.name || 'FileFlexer user';
+    document.getElementById('profileEmail').textContent = p.email;
+    document.getElementById('nameInput').value = p.name || '';
+    renderAvatar();
+  }
+  document.getElementById('nameForm').onsubmit = (e)=>{
+    e.preventDefault();
+    FF.updateProfileName(document.getElementById('nameInput').value.trim());
+    FF.toast('Name updated');
+    location.reload();
+  };
+  document.getElementById('logoutBtn').onclick = FF.logout;
+
+  // ---- Profile photo upload ----
+  document.getElementById('avatarEditBtn').onclick = ()=> document.getElementById('avatarInput').click();
+  document.getElementById('avatarInput').onchange = (e)=>{
+    const file = e.target.files[0];
+    if(!file || !file.type.startsWith('image/')){ FF.toast('Please choose an image file'); return; }
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (ev)=>{
+      img.onload = ()=>{
+        // downscale + center-crop to a small square so it stays light in storage
+        const size = 160;
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const s = Math.min(img.width, img.height);
+        const sx = (img.width - s) / 2, sy = (img.height - s) / 2;
+        ctx.drawImage(img, sx, sy, s, s, 0, 0, size, size);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        FF.updateProfileAvatar(dataUrl);
+        renderAvatar();
+        FF.renderNavAuth();
+        FF.toast('Profile photo updated');
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  document.getElementById('removeAvatarBtn').onclick = ()=>{
+    FF.updateProfileAvatar('');
+    renderAvatar();
+    FF.renderNavAuth();
+    FF.toast('Profile photo removed');
+  };
+
+  const tools = [
+    {key:'pdf', label:'PDF Convertor', icon:'📄', link:'tools/pdf-tools.html'},
+    {key:'image', label:'Image Compressor', icon:'🖼️', link:'tools/image-compressor.html'},
+    {key:'chat', label:'AI Chat', icon:'💬', link:'tools/ai-chat.html'},
+    {key:'bg', label:'Remove Background', icon:'✂️', link:'tools/bg-remover.html'},
+    {key:'qr', label:'QR Codes', icon:'▦', link:'tools/qr-generator.html'},
+    {key:'password', label:'Passwords generated', icon:'🔒', link:'tools/password-generator.html'},
+    {key:'unit', label:'Unit conversions', icon:'⇄', link:'tools/unit-converter.html'},
+    {key:'age', label:'Age calculations', icon:'🎂', link:'tools/age-calculator.html'},
+  ];
+  const d = FF.getData() || {};
+  const grid = document.getElementById('activityGrid');
+  grid.innerHTML = tools.map(t=>`
+    <a class="tool-card in-view" href="${t.link}">
+      <div class="tool-icon">${t.icon}</div>
+      <h3>${t.label}</h3>
+      <p>${(d[t.key]||[]).length} saved item${(d[t.key]||[]).length===1?'':'s'}</p>
+    </a>`).join('');
+</script>
+</body>
+</html>

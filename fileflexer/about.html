@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — FileFlexer</title>
+<link rel="icon" href="assets/favicon.ico" type="image/x-icon">
+<link rel="icon" href="assets/logo.png" type="image/png">
+<link rel="stylesheet" href="css/style.css">
+<script>try{document.documentElement.setAttribute("data-theme", localStorage.getItem("ff_theme")==="light"?"light":"dark");}catch(e){}</script>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="logo"><img class="logo-mark" src="assets/logo.png" alt="FileFlexer logo">FileFlexer</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#services">Tools</a>
+      <a href="about.html">About</a>
+    </div>
+    <div class="nav-actions" id="navAuthSlot"></div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <div class="eyebrow">● About FileFlexer</div>
+  <h1>One free hub for the tools you reach for every day.</h1>
+  <p class="lead">FileFlexer bundles PDF conversion, image tools, an AI assistant, and a handful of everyday utilities into a single account — no separate sign-ups, no scattered bookmarks.</p>
+</header>
+
+<section class="section" data-animate>
+  <div class="wrap grid-2">
+    <div class="tool-card in-view">
+      <div class="tool-icon">🔐</div>
+      <h3>Your data stays yours</h3>
+      <p>Files are processed directly in your browser. Nothing you upload is sent to a server — your history is saved to your own account, on your own device.</p>
+    </div>
+    <div class="tool-card in-view">
+      <div class="tool-icon">⚡</div>
+      <h3>Fast, no clutter</h3>
+      <p>Every tool opens in seconds and does one job well — no ads, no watermarks, no forced downloads.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="tag">Why FileFlexer</div>
+      <h2>Built for the small tasks that add up.</h2>
+      <p>Converting a file, shrinking a photo, generating a QR code — small tasks that shouldn't need ten different websites. FileFlexer keeps them all, and your history, in one place.</p>
+    </div>
+    <a href="index.html#services" class="btn btn-primary">Explore the tools →</a>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div class="logo" style="font-size:16px;"><img class="logo-mark" src="assets/logo.png" alt="FileFlexer logo" style="width:24px;height:24px;">FileFlexer</div>
+    <div class="muted">Your files stay in your browser — nothing is uploaded to a server.</div>
+  </div>
+</footer>
+
+<div class="modal-overlay" id="authOverlay">
+  <div class="modal">
+    <button class="modal-close" id="authClose">✕</button>
+    <div class="modal-tabs" id="authTabs">
+      <div class="modal-tab" id="tabLogin">Sign in</div>
+      <div class="modal-tab active" id="tabSignup">Create account</div>
+    </div>
+    <h2 id="authTitle">Welcome to FileFlexer</h2>
+    <p class="sub" id="authSub">Sign in or create a free account to save your work.</p>
+    <form id="authForm">
+      <div class="field" id="nameField" style="display:none;">
+        <label>Name</label>
+        <input type="text" id="authName" placeholder="Your name">
+      </div>
+      <div class="field" id="emailField">
+        <label>Email</label>
+        <input type="email" id="authEmail" placeholder="you@example.com" required>
+      </div>
+      <div class="field" id="passwordField">
+        <label>Password</label>
+        <input type="password" id="authPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="field" id="otpField" style="display:none;">
+        <label>6-digit code</label>
+        <input type="text" id="authOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+        <div class="otp-resend"><span class="muted" style="color:var(--muted);">Didn't get it?</span><a href="#" id="otpResend">Resend code</a></div>
+      </div>
+      <div class="field" id="newPasswordField" style="display:none;">
+        <label>New password</label>
+        <input type="password" id="authNewPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="modal-error" id="authError"></div>
+      <button type="submit" class="btn btn-primary modal-submit" id="authSubmit">Create account</button>
+      <div class="modal-links" id="modalLinks"><a href="#" id="forgotLink">Forgot password?</a></div>
+      <div class="modal-links" id="backLinkWrap" style="display:none;"><a href="#" id="backLink">← Back</a></div>
+    </form>
+  </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

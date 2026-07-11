@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Compressor — FileFlexer</title>
+<link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+<link rel="icon" href="../assets/logo.png" type="image/png">
+<link rel="stylesheet" href="../css/style.css">
+<script>try{document.documentElement.setAttribute("data-theme", localStorage.getItem("ff_theme")==="light"?"light":"dark");}catch(e){}</script>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><img class="logo-mark" src="../assets/logo.png" alt="FileFlexer logo">FileFlexer</a>
+    <div class="nav-links">
+      <a href="../index.html">Home</a>
+      <a href="../index.html#services">Tools</a>
+      <a href="../about.html">About</a>
+    </div>
+    <div class="nav-actions" id="navAuthSlot"></div>
+  </div>
+</nav>
+
+<div class="tool-shell wrap">
+  <div class="tool-header">
+    <a href="../index.html#services" class="back">← Back to tools</a>
+    <h1>🖼️ Image Compressor</h1>
+    <p>Shrink any photo's file size right in your browser — smart auto-compress, format conversion, and resizing, with nothing ever uploaded anywhere.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="dropzone" id="dropzone">
+        <div class="dz-icon">⇧</div>
+        <div class="dz-title">Click to choose an image, or drag one here</div>
+        <div class="dz-sub">JPG, PNG, or WEBP</div>
+        <input type="file" id="fileInput" accept="image/*" style="display:none;">
+      </div>
+
+      <div id="editArea" style="display:none;margin-top:20px;">
+
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" id="autoBtn">✨ Smart auto-compress</button>
+          <span class="muted" style="color:var(--muted);font-size:12.5px;align-self:center;">Finds the best quality at the smallest size, automatically.</span>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:6px;">
+          <div class="field" style="margin:0;">
+            <label>Output format</label>
+            <select id="formatSelect">
+              <option value="auto">Auto (recommended)</option>
+              <option value="image/jpeg">JPEG</option>
+              <option value="image/webp">WebP (best compression)</option>
+              <option value="image/png">PNG (lossless, larger)</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0;">
+            <label>Max dimension</label>
+            <select id="resizeSelect">
+              <option value="0">Keep original size</option>
+              <option value="2560">2560px</option>
+              <option value="1920" selected>1920px</option>
+              <option value="1280">1280px</option>
+              <option value="800">800px</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Quality: <span id="qLabel">70</span>%</label>
+          <input type="range" id="qSlider" min="10" max="100" value="70">
+        </div>
+
+        <div class="grid-2" style="margin:16px 0;">
+          <div>
+            <div class="muted" style="color:var(--muted);font-size:12.5px;margin-bottom:6px;">Original</div>
+            <img id="origPreview" style="border-radius:10px;border:1px solid var(--border);">
+            <div class="sub" id="origSize" style="color:var(--muted);font-size:12.5px;margin-top:4px;"></div>
+          </div>
+          <div>
+            <div class="muted" style="color:var(--muted);font-size:12.5px;margin-bottom:6px;">Compressed</div>
+            <img id="compPreview" style="border-radius:10px;border:1px solid var(--border);">
+            <div class="sub" id="compSize" style="color:var(--muted);font-size:12.5px;margin-top:4px;"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-primary" id="downloadBtn">Download compressed image</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin-top:0;">Recent compressions</h3>
+      <p class="muted" style="color:var(--muted);font-size:12.5px;margin-top:-8px;">Click any item to see the details.</p>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="authOverlay">
+  <div class="modal">
+    <button class="modal-close" id="authClose">✕</button>
+    <div class="modal-tabs" id="authTabs">
+      <div class="modal-tab" id="tabLogin">Sign in</div>
+      <div class="modal-tab active" id="tabSignup">Create account</div>
+    </div>
+    <h2 id="authTitle">Welcome to FileFlexer</h2>
+    <p class="sub" id="authSub">Sign in or create a free account to save your work.</p>
+    <form id="authForm">
+      <div class="field" id="nameField" style="display:none;">
+        <label>Name</label>
+        <input type="text" id="authName" placeholder="Your name">
+      </div>
+      <div class="field" id="emailField">
+        <label>Email</label>
+        <input type="email" id="authEmail" placeholder="you@example.com" required>
+      </div>
+      <div class="field" id="passwordField">
+        <label>Password</label>
+        <input type="password" id="authPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="field" id="otpField" style="display:none;">
+        <label>6-digit code</label>
+        <input type="text" id="authOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+        <div class="otp-resend"><span class="muted" style="color:var(--muted);">Didn't get it?</span><a href="#" id="otpResend">Resend code</a></div>
+      </div>
+      <div class="field" id="newPasswordField" style="display:none;">
+        <label>New password</label>
+        <input type="password" id="authNewPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="modal-error" id="authError"></div>
+      <button type="submit" class="btn btn-primary modal-submit" id="authSubmit">Create account</button>
+      <div class="modal-links" id="modalLinks"><a href="#" id="forgotLink">Forgot password?</a></div>
+      <div class="modal-links" id="backLinkWrap" style="display:none;"><a href="#" id="backLink">← Back</a></div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/auth.js"></script>
+<script src="../js/main.js"></script>
+<script>
+  if(!FF.isLoggedIn()) FF.openAuthModal(location.pathname.split('/').pop(), 'signup');
+
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  dropzone.onclick = ()=>fileInput.click();
+  dropzone.ondragover = (e)=>{ e.preventDefault(); dropzone.classList.add('drag'); };
+  dropzone.ondragleave = ()=> dropzone.classList.remove('drag');
+  dropzone.ondrop = (e)=>{ e.preventDefault(); dropzone.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); };
+  fileInput.onchange = ()=> handleFile(fileInput.files[0]);
+
+  let origFile = null, origDataUrl = null, img = new Image();
+
+  function handleFile(file){
+    if(!file || !file.type.startsWith('image/')){ FF.toast('Please choose an image file'); return; }
+    origFile = file;
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      origDataUrl = e.target.result;
+      img.onload = ()=>{
+        document.getElementById('editArea').style.display = 'block';
+        document.getElementById('origPreview').src = origDataUrl;
+        document.getElementById('origSize').textContent = formatBytes(file.size) + ' · ' + img.width + '×' + img.height;
+        compress();
+      };
+      img.src = origDataUrl;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function formatBytes(b){
+    if(b < 1024) return b + ' B';
+    if(b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+    return (b/1024/1024).toFixed(2) + ' MB';
+  }
+
+  // Draws the image (resized per the "max dimension" setting) onto a fresh canvas
+  function drawResized(){
+    const maxDim = parseInt(document.getElementById('resizeSelect').value, 10);
+    let w = img.width, h = img.height;
+    if(maxDim && Math.max(w,h) > maxDim){
+      const scale = maxDim / Math.max(w,h);
+      w = Math.round(w*scale); h = Math.round(h*scale);
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, w, h);
+    return canvas;
+  }
+
+  function pickMime(){
+    const choice = document.getElementById('formatSelect').value;
+    if(choice !== 'auto') return choice;
+    // Auto: keep PNGs with transparency as PNG, otherwise use JPEG for best size/quality balance
+    return (origFile.type === 'image/png') ? 'image/png' : 'image/jpeg';
+  }
+
+  function dataUrlBytes(dataUrl){
+    return Math.round((dataUrl.length - dataUrl.indexOf(',') - 1) * 0.75);
+  }
+
+  let lastCompressedDataUrl = null, lastMime = 'image/jpeg';
+  function compress(){
+    if(!img.src) return;
+    const canvas = drawResized();
+    const quality = parseInt(document.getElementById('qSlider').value,10) / 100;
+    let mime = pickMime();
+    if(mime === 'image/png' && quality < 0.95){
+      // PNG ignores the quality param entirely, so nudge users toward a lossy format for real savings
+      mime = 'image/jpeg';
+    }
+    const dataUrl = canvas.toDataURL(mime, quality);
+    lastCompressedDataUrl = dataUrl;
+    lastMime = mime;
+    document.getElementById('compPreview').src = dataUrl;
+    const bytes = dataUrlBytes(dataUrl);
+    const pct = Math.round((1 - bytes/origFile.size)*100);
+    document.getElementById('compSize').textContent = formatBytes(bytes) + ' · ' + (pct>0? pct+'% smaller' : 'larger than original');
+  }
+  document.getElementById('qSlider').oninput = (e)=>{
+    document.getElementById('qLabel').textContent = e.target.value;
+    compress();
+  };
+  document.getElementById('formatSelect').onchange = compress;
+  document.getElementById('resizeSelect').onchange = compress;
+
+  // ---- Smart auto-compress: binary-search quality to land near a strong-but-clean target ----
+  document.getElementById('autoBtn').onclick = ()=>{
+    if(!img.src) return;
+    FF.toast('Finding the best quality…');
+    const canvas = drawResized();
+    let mime = pickMime();
+    if(mime === 'image/png') mime = 'image/jpeg'; // auto-compress always needs a lossy format to make real gains
+
+    // Target: the smallest size that still looks good — aim for ~70% smaller than original,
+    // but never drop below a quality floor that starts to look blocky.
+    const targetBytes = Math.max(20*1024, origFile.size * 0.3);
+    let lo = 0.35, hi = 0.95, best = null;
+    for(let i=0;i<7;i++){
+      const mid = (lo+hi)/2;
+      const dataUrl = canvas.toDataURL(mime, mid);
+      const bytes = dataUrlBytes(dataUrl);
+      if(bytes > targetBytes){ hi = mid; } else { lo = mid; best = { dataUrl, bytes, quality: mid }; }
+    }
+    if(!best){
+      const dataUrl = canvas.toDataURL(mime, lo);
+      best = { dataUrl, bytes: dataUrlBytes(dataUrl), quality: lo };
+    }
+    lastCompressedDataUrl = best.dataUrl;
+    lastMime = mime;
+    document.getElementById('formatSelect').value = mime === 'image/webp' ? 'image/webp' : 'image/jpeg';
+    const qPct = Math.round(best.quality*100);
+    document.getElementById('qSlider').value = qPct;
+    document.getElementById('qLabel').textContent = qPct;
+    document.getElementById('compPreview').src = best.dataUrl;
+    const pct = Math.round((1 - best.bytes/origFile.size)*100);
+    document.getElementById('compSize').textContent = formatBytes(best.bytes) + ' · ' + (pct>0? pct+'% smaller' : 'larger than original');
+    FF.toast('Done — optimized automatically');
+  };
+
+  document.getElementById('downloadBtn').onclick = ()=>{
+    if(!lastCompressedDataUrl) return;
+    const ext = lastMime === 'image/webp' ? '.webp' : lastMime === 'image/png' ? '.png' : '.jpg';
+    const baseName = (origFile.name || 'image').replace(/\.[^.]+$/, '');
+    const a = document.createElement('a');
+    a.href = lastCompressedDataUrl;
+    a.download = 'compressed-' + baseName + ext;
+    a.click();
+
+    if(FF.isLoggedIn()){
+      // store a small thumbnail only, to keep storage light
+      const thumbCanvas = document.createElement('canvas');
+      const s = 96;
+      thumbCanvas.width = s; thumbCanvas.height = s;
+      thumbCanvas.getContext('2d').drawImage(img, 0, 0, s, s);
+      const compBytes = dataUrlBytes(lastCompressedDataUrl);
+      FF.pushHistory('image', {
+        name: origFile.name,
+        origBytes: origFile.size,
+        compBytes,
+        width: img.width,
+        height: img.height,
+        format: lastMime,
+        thumb: thumbCanvas.toDataURL('image/jpeg', 0.6)
+      });
+      renderHistory();
+      FF.toast('Saved to your account');
+    }
+  };
+
+  function renderHistory(){
+    const d = FF.getData();
+    const list = document.getElementById('historyList');
+    const items = (d && d.image) || [];
+    if(!items.length){ list.innerHTML = '<div class="empty-state">No compressions saved yet.</div>'; return; }
+    list.innerHTML = items.map(it=>`
+      <div class="history-item" data-id="${it.id}">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <img src="${it.thumb}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;">
+          <div><div class="name">${it.name}</div><div class="sub">${formatBytes(it.origBytes)} → ${formatBytes(it.compBytes)}</div></div>
+        </div>
+        <span class="badge badge-ok">-${Math.round((1-it.compBytes/it.origBytes)*100)}%</span>
+      </div>`).join('');
+    list.querySelectorAll('.history-item').forEach(el=>{
+      el.onclick = ()=>{
+        const it = items.find(x=>x.id===el.dataset.id);
+        if(!it) return;
+        const pct = Math.round((1-it.compBytes/it.origBytes)*100);
+        FF.openInfoModal({
+          title: it.name,
+          thumb: it.thumb,
+          rows: [
+            { label:'Original size', value: formatBytes(it.origBytes) },
+            { label:'Compressed size', value: formatBytes(it.compBytes) },
+            { label:'Reduction', value: (pct>0?('-'+pct+'%'):'—') },
+            { label:'Dimensions', value: it.width && it.height ? (it.width+'×'+it.height) : '—' },
+            { label:'Format', value: (it.format||'').replace('image/','').toUpperCase() || '—' },
+            { label:'Saved', value: new Date(it.ts).toLocaleString() },
+          ],
+          note: 'Only a small preview thumbnail is saved to your account — the original file itself never leaves your device.'
+        });
+      };
+    });
+  }
+  renderHistory();
+</script>
+</body>
+</html>

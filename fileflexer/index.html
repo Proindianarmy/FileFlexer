@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FileFlexer — All your everyday tools, in one place</title>
+<link rel="icon" href="assets/favicon.ico" type="image/x-icon">
+<link rel="icon" href="assets/logo.png" type="image/png">
+<link rel="stylesheet" href="css/style.css">
+<script>try{document.documentElement.setAttribute("data-theme", localStorage.getItem("ff_theme")==="light"?"light":"dark");}catch(e){}</script>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="logo"><img class="logo-mark" src="assets/logo.png" alt="FileFlexer logo">FileFlexer</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#services">Tools</a>
+      <a href="about.html">About</a>
+    </div>
+    <div class="nav-actions" id="navAuthSlot"></div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <div class="hero-text">
+    <div class="eyebrow">● Free, private, works in your browser</div>
+    <h1>Every everyday tool, <br>flexed into one place.</h1>
+    <p class="lead">Convert PDFs, compress images, generate QR codes, chat with AI, and more — all free, all in one account, with your work saved automatically.</p>
+    <div class="hero-actions">
+      <button class="btn btn-primary" id="heroGetStarted">Get Started →</button>
+      <a href="about.html" class="btn btn-ghost">Learn more</a>
+    </div>
+  </div>
+  <div class="hero-logo-wrap">
+    <img src="assets/logo.png" alt="FileFlexer logo" class="hero-logo">
+  </div>
+</header>
+
+<section class="section" id="services">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="tag">Our Services</div>
+      <h2>Eight tools. One account.</h2>
+      <p>Every tool below saves your history to your FileFlexer account, so your work is always right where you left it.</p>
+    </div>
+    <div class="pegboard">
+
+      <div class="tool-card">
+        <div class="tool-icon">📄</div>
+        <h3>PDF Convertor</h3>
+        <p>Merge, compress, and convert between Word, images, and PDF.</p>
+        <a class="btn btn-sm open-tool" data-tool="tools/pdf-tools.html">Open tool →</a>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-icon">🖼️</div>
+        <h3>Image Compressor</h3>
+        <p>Shrink photo file sizes while keeping the quality you need.</p>
+        <a class="btn btn-sm open-tool" data-tool="tools/image-compressor.html">Open tool →</a>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-icon">💬</div>
+        <h3>AI Chat</h3>
+        <p>Chat with an AI assistant. Your conversations are saved to your account.</p>
+        <a class="btn btn-sm open-tool" data-tool="tools/ai-chat.html">Open tool →</a>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-icon">✂️</div>
+        <h3>Remove Background</h3>
+        <p>Cleanly remove the background from any photo, right in your browser.</p>
+        <a class="btn btn-sm open-tool" data-tool="tools/bg-remover.html">Open tool →</a>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-icon">▦</div>
+        <h3>QR Code Generator</h3>
+        <p>Turn any link into a QR code, with 1‑day, 7‑day, or no expiry.</p>
+        <a class="btn btn-sm open-tool" data-tool="tools/qr-generator.html">Open tool →</a>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-icon">🔒</div>
+        <h3>Password Generator</h3>
+        <p>Generate strong, random passwords at the length you choose.</p>
+        <a class="btn btn-sm open-tool" data-tool="tools/password-generator.html">Open tool →</a>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-icon">⇄</div>
+        <h3>Unit Converter</h3>
+        <p>Distance, weight, temperature, storage, and binary/hex — instantly.</p>
+        <a class="btn btn-sm open-tool" data-tool="tools/unit-converter.html">Open tool →</a>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-icon">🎂</div>
+        <h3>Age Calculator</h3>
+        <p>Find your exact age in years, months, and days from your birthdate.</p>
+        <a class="btn btn-sm open-tool" data-tool="tools/age-calculator.html">Open tool →</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div class="logo" style="font-size:16px;"><img class="logo-mark" src="assets/logo.png" alt="FileFlexer logo" style="width:24px;height:24px;">FileFlexer</div>
+    <div class="muted">Your files stay in your browser — nothing is uploaded to a server.</div>
+  </div>
+</footer>
+
+<!-- Auth Modal -->
+<div class="modal-overlay" id="authOverlay">
+  <div class="modal">
+    <button class="modal-close" id="authClose">✕</button>
+    <div class="modal-tabs" id="authTabs">
+      <div class="modal-tab" id="tabLogin">Sign in</div>
+      <div class="modal-tab active" id="tabSignup">Create account</div>
+    </div>
+    <h2 id="authTitle">Welcome to FileFlexer</h2>
+    <p class="sub" id="authSub">Sign in or create a free account to save your work.</p>
+    <form id="authForm">
+      <div class="field" id="nameField" style="display:none;">
+        <label>Name</label>
+        <input type="text" id="authName" placeholder="Your name">
+      </div>
+      <div class="field" id="emailField">
+        <label>Email</label>
+        <input type="email" id="authEmail" placeholder="you@example.com" required>
+      </div>
+      <div class="field" id="passwordField">
+        <label>Password</label>
+        <input type="password" id="authPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="field" id="otpField" style="display:none;">
+        <label>6-digit code</label>
+        <input type="text" id="authOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+        <div class="otp-resend"><span class="muted" style="color:var(--muted);">Didn't get it?</span><a href="#" id="otpResend">Resend code</a></div>
+      </div>
+      <div class="field" id="newPasswordField" style="display:none;">
+        <label>New password</label>
+        <input type="password" id="authNewPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="modal-error" id="authError"></div>
+      <button type="submit" class="btn btn-primary modal-submit" id="authSubmit">Create account</button>
+      <div class="modal-links" id="modalLinks"><a href="#" id="forgotLink">Forgot password?</a></div>
+      <div class="modal-links" id="backLinkWrap" style="display:none;"><a href="#" id="backLink">← Back</a></div>
+    </form>
+  </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script src="js/main.js"></script>
+<script>
+  document.getElementById('heroGetStarted').onclick = ()=>{
+    if(FF.isLoggedIn()){ document.getElementById('services').scrollIntoView({behavior:'smooth'}); }
+    else { FF.openAuthModal('index.html#services', 'signup'); }
+  };
+  document.querySelectorAll('.open-tool').forEach(a=>{
+    a.addEventListener('click', (e)=>{
+      const target = a.dataset.tool;
+      if(!FF.isLoggedIn()){
+        e.preventDefault();
+        FF.openAuthModal(target, 'signup');
+      } else {
+        window.location.href = target;
+      }
+    });
+  });
+  // if redirected here post-login with #services, scroll to it
+  if(location.hash === '#services'){ window.addEventListener('load', ()=>document.getElementById('services').scrollIntoView()); }
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redirecting… — FileFlexer</title>
+<link rel="icon" href="assets/favicon.ico" type="image/x-icon">
+<link rel="icon" href="assets/logo.png" type="image/png">
+<link rel="stylesheet" href="css/style.css">
+<script>try{document.documentElement.setAttribute("data-theme", localStorage.getItem("ff_theme")==="light"?"light":"dark");}catch(e){}</script>
+</head>
+<body>
+<div class="wrap" style="padding:100px 24px;text-align:center;">
+  <div id="box">
+    <h1>Checking link…</h1>
+  </div>
+</div>
+<script>
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  let registry = {};
+  try{ registry = JSON.parse(localStorage.getItem('ff_qr_registry')) || {}; }catch(e){}
+  const entry = registry[id];
+  const box = document.getElementById('box');
+  if(!entry){
+    box.innerHTML = '<h1>Link not found</h1><p style="color:var(--muted)">This QR code was not generated on this device/browser, so it can\'t be resolved here.</p>';
+  } else if(entry.expiresAt && Date.now() > entry.expiresAt){
+    box.innerHTML = '<h1>This QR code has expired</h1><p style="color:var(--muted)">It stopped working on '+new Date(entry.expiresAt).toLocaleString()+'.</p>';
+  } else {
+    box.innerHTML = '<h1>Redirecting…</h1><p style="color:var(--muted)">Taking you to '+entry.url+'</p>';
+    setTimeout(()=>{ location.href = entry.url; }, 600);
+  }
+</script>
+</body>
+</html>

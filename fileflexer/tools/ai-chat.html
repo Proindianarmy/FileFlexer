@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Chat — FileFlexer</title>
+<link rel="icon" href="../assets/favicon.ico" type="image/x-icon">
+<link rel="icon" href="../assets/logo.png" type="image/png">
+<link rel="stylesheet" href="../css/style.css">
+<script>try{document.documentElement.setAttribute("data-theme", localStorage.getItem("ff_theme")==="light"?"light":"dark");}catch(e){}</script>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo"><img class="logo-mark" src="../assets/logo.png" alt="FileFlexer logo">FileFlexer</a>
+    <div class="nav-links">
+      <a href="../index.html">Home</a>
+      <a href="../index.html#services">Tools</a>
+      <a href="../about.html">About</a>
+    </div>
+    <div class="nav-actions" id="navAuthSlot"></div>
+  </div>
+</nav>
+
+<div class="tool-shell wrap">
+  <div class="tool-header">
+    <a href="../index.html#services" class="back">← Back to tools</a>
+    <h1>💬 AI Chat</h1>
+    <p>Chat with an AI assistant. Your conversations are saved to your FileFlexer account on this device.</p>
+  </div>
+
+  <div class="chat-wrap">
+    <div class="chat-side">
+      <button class="btn btn-primary btn-sm" id="newChatBtn" style="width:100%;margin-bottom:14px;">+ New chat</button>
+      <div id="convList"></div>
+    </div>
+    <div class="chat-main">
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" placeholder="Message the AI…">
+        <button class="btn btn-primary" id="sendBtn">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="authOverlay">
+  <div class="modal">
+    <button class="modal-close" id="authClose">✕</button>
+    <div class="modal-tabs" id="authTabs">
+      <div class="modal-tab" id="tabLogin">Sign in</div>
+      <div class="modal-tab active" id="tabSignup">Create account</div>
+    </div>
+    <h2 id="authTitle">Welcome to FileFlexer</h2>
+    <p class="sub" id="authSub">Sign in or create a free account to save your work.</p>
+    <form id="authForm">
+      <div class="field" id="nameField" style="display:none;">
+        <label>Name</label>
+        <input type="text" id="authName" placeholder="Your name">
+      </div>
+      <div class="field" id="emailField">
+        <label>Email</label>
+        <input type="email" id="authEmail" placeholder="you@example.com" required>
+      </div>
+      <div class="field" id="passwordField">
+        <label>Password</label>
+        <input type="password" id="authPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="field" id="otpField" style="display:none;">
+        <label>6-digit code</label>
+        <input type="text" id="authOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+        <div class="otp-resend"><span class="muted" style="color:var(--muted);">Didn't get it?</span><a href="#" id="otpResend">Resend code</a></div>
+      </div>
+      <div class="field" id="newPasswordField" style="display:none;">
+        <label>New password</label>
+        <input type="password" id="authNewPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="modal-error" id="authError"></div>
+      <button type="submit" class="btn btn-primary modal-submit" id="authSubmit">Create account</button>
+      <div class="modal-links" id="modalLinks"><a href="#" id="forgotLink">Forgot password?</a></div>
+      <div class="modal-links" id="backLinkWrap" style="display:none;"><a href="#" id="backLink">← Back</a></div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/main.js"></script>
+<script>
+  if(!FF.isLoggedIn()) FF.openAuthModal(location.pathname.split('/').pop(), 'signup');
+
+  // ---- conversations ----
+  let activeId = null;
+  function conversations(){ return (FF.getData() && FF.getData().chat) || []; }
+  function saveConversations(list){ const d = FF.getData(); d.chat = list; FF.setData(d); }
+
+  function renderConvList(){
+    const list = conversations();
+    const el = document.getElementById('convList');
+    if(!list.length){ el.innerHTML = '<div class="empty-state">No chats yet.</div>'; return; }
+    el.innerHTML = list.map(c=>`<div class="conv-item ${c.id===activeId?'active':''}" data-id="${c.id}">${c.title || 'New chat'}</div>`).join('');
+    el.querySelectorAll('.conv-item').forEach(item=>{
+      item.onclick = ()=>{ activeId = item.dataset.id; renderConvList(); renderMessages(); };
+    });
+  }
+  function currentConv(){ return conversations().find(c=>c.id===activeId); }
+
+  // Tracks which conversation/message should play the typewriter reveal —
+  // kept outside the saved data so switching chats never re-triggers it.
+  let pendingAnimate = null; // { convId, text }
+
+  function renderMessages(){
+    const conv = currentConv();
+    const box = document.getElementById('chatMessages');
+    if(!conv){ box.innerHTML = '<div class="empty-state" style="margin:auto;">Start a new chat to begin.</div>'; return; }
+
+    const animateThisMsg = pendingAnimate && pendingAnimate.convId === conv.id
+      && conv.messages.length && conv.messages[conv.messages.length-1].role === 'ai'
+      && conv.messages[conv.messages.length-1].text === pendingAnimate.text;
+
+    const msgs = conv.messages;
+    box.innerHTML = msgs.map((m, i)=>{
+      if(m.text === '__typing__') return `<div class="msg ai"><span class="typing-dots"><span></span><span></span><span></span></span></div>`;
+      if(animateThisMsg && i === msgs.length - 1) return `<div class="msg ai" id="ffTypeTarget"></div>`;
+      return `<div class="msg ${m.role}">${m.role==='ai' ? formatAiText(m.text) : escapeHtml(m.text)}</div>`;
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+
+    if(animateThisMsg){
+      const target = document.getElementById('ffTypeTarget');
+      const finalText = pendingAnimate.text;
+      const thisConvId = conv.id;
+      pendingAnimate = null; // consume — a re-render (e.g. switching away and back) won't replay it
+      typewriter(target, finalText, box, ()=>{
+        // once done, swap in the fully-formatted version (bold/lists/etc.)
+        if(activeId === thisConvId && target && target.isConnected){
+          target.innerHTML = formatAiText(finalText);
+        }
+      });
+    }
+  }
+
+  // Reveals text a few characters at a time with a blinking cursor, then hands off
+  // to the caller to swap in the final formatted HTML once finished.
+  function typewriter(el, text, scrollBox, onDone){
+    if(!el){ onDone(); return; }
+    let i = 0;
+    const perTick = Math.max(1, Math.round(text.length / 220)); // keep long replies snappy
+    (function step(){
+      if(!el.isConnected){ return; } // user navigated away mid-animation
+      i += perTick;
+      const shown = text.slice(0, i);
+      el.textContent = shown;
+      const cursor = document.createElement('span');
+      cursor.className = 'typing-cursor';
+      el.appendChild(cursor);
+      if(scrollBox) scrollBox.scrollTop = scrollBox.scrollHeight;
+      if(i < text.length){ setTimeout(step, 14); }
+      else { onDone(); }
+    })();
+  }
+
+  function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  // Lightweight markdown renderer: headers, bold, bullet/numbered lists, line breaks.
+  // Keeps things safe by escaping first, then re-introducing only the tags we generate ourselves.
+  function formatAiText(raw){
+    const lines = escapeHtml(raw).split('\n');
+    let html = '';
+    let inList = false, listType = null;
+    const closeList = ()=>{ if(inList){ html += listType==='ol' ? '</ol>' : '</ul>'; inList=false; listType=null; } };
+    for(let line of lines){
+      const trimmed = line.trim();
+      const headerMatch = trimmed.match(/^#{1,3}\s+(.*)$/);
+      const olMatch = trimmed.match(/^\d+[.)]\s+(.*)$/);
+      const ulMatch = trimmed.match(/^[-*•]\s+(.*)$/);
+      if(headerMatch){
+        closeList();
+        html += `<div style="font-weight:700;margin:6px 0 2px;">${inlineFormat(headerMatch[1])}</div>`;
+      } else if(olMatch){
+        if(!inList || listType!=='ol'){ closeList(); html += '<ol style="margin:4px 0 4px 18px;padding:0;">'; inList=true; listType='ol'; }
+        html += `<li style="margin:2px 0;">${inlineFormat(olMatch[1])}</li>`;
+      } else if(ulMatch){
+        if(!inList || listType!=='ul'){ closeList(); html += '<ul style="margin:4px 0 4px 18px;padding:0;">'; inList=true; listType='ul'; }
+        html += `<li style="margin:2px 0;">${inlineFormat(ulMatch[1])}</li>`;
+      } else if(trimmed === ''){
+        closeList();
+        html += '<div style="height:6px;"></div>';
+      } else {
+        closeList();
+        html += `<div>${inlineFormat(line)}</div>`;
+      }
+    }
+    closeList();
+    return html;
+  }
+  function inlineFormat(s){
+    return s
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/(?<!\*)\*([^*]+?)\*(?!\*)/g, '<em>$1</em>')
+      .replace(/`([^`]+?)`/g, '<code style="background:var(--surface-2);padding:1px 5px;border-radius:5px;font-size:.92em;">$1</code>');
+  }
+
+  document.getElementById('newChatBtn').onclick = ()=>{
+    const list = conversations();
+    const conv = { id:'c_'+Math.random().toString(36).slice(2,9), title:'New chat', messages:[], ts:Date.now() };
+    list.unshift(conv);
+    saveConversations(list);
+    activeId = conv.id;
+    renderConvList(); renderMessages();
+  };
+
+  async function sendMessage(){
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if(!text) return;
+    let conv = currentConv();
+    if(!conv){
+      conv = { id:'c_'+Math.random().toString(36).slice(2,9), title:text.slice(0,32), messages:[], ts:Date.now() };
+      const list = conversations(); list.unshift(conv); saveConversations(list);
+      activeId = conv.id;
+    }
+    conv.messages.push({ role:'user', text });
+    if(conv.title==='New chat') conv.title = text.slice(0,32);
+    persistConv(conv);
+    input.value = '';
+    renderConvList(); renderMessages();
+
+    const thinkingMsg = { role:'ai', text:'__typing__' };
+    conv.messages.push(thinkingMsg);
+    renderMessages();
+
+    try{
+      const resp = await fetch('/api/ai-chat', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          messages: conv.messages.filter(m=>m.text!=='__typing__').map(m=>({ role: m.role==='user'?'user':'model', parts:[{text:m.text}] }))
+        })
+      });
+      
+      const data = await resp.json();
+      const blockReason = data?.promptFeedback?.blockReason || data?.candidates?.[0]?.finishReason;
+      let reply;
+      if(blockReason === 'SAFETY' || blockReason === 'BLOCKLIST' || data?.promptFeedback?.blockReason){
+        reply = "I can't help with that one. 🙏 Let me know if there's something else I can do for you.";
+      } else {
+        reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || data?.error?.message || 'No response from the model.';
+      }
+      conv.messages[conv.messages.length-1] = { role:'ai', text: reply };
+      pendingAnimate = { convId: conv.id, text: reply };
+    }catch(err){
+      const reply = 'Error reaching the API: ' + err.message;
+      conv.messages[conv.messages.length-1] = { role:'ai', text: reply };
+      pendingAnimate = { convId: conv.id, text: reply };
+    }
+    persistConv(conv);
+    renderMessages(); renderConvList();
+  }
+  function persistConv(conv){
+    const list = conversations();
+    const idx = list.findIndex(c=>c.id===conv.id);
+    if(idx>-1) list[idx] = conv; else list.unshift(conv);
+    saveConversations(list);
+  }
+
+  document.getElementById('sendBtn').onclick = sendMessage;
+  document.getElementById('chatInput').addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendMessage(); });
+
+  renderConvList();
+  if(conversations().length){ activeId = conversations()[0].id; }
+  renderMessages();
+</script>
+</body>
+</html>
